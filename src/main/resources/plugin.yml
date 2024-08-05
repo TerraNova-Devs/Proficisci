@@ -1,0 +1,4 @@
+name: Proficisci
+version: '1.0.0'
+main: de.mcterranova.proficisci.Proficisci
+api-version: '1.21'
