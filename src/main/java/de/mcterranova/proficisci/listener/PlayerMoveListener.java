@@ -2,25 +2,22 @@ package de.mcterranova.proficisci.listener;
 
 import de.mcterranova.proficisci.Proficisci;
 import de.mcterranova.proficisci.database.BarrelDatabase;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.inventory.meta.ItemMeta;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerMoveEvent;
 
 import java.sql.SQLException;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class PlayerMoveListener implements Listener {
-    private final BarrelDatabase barrelDatabase;
     private final Proficisci plugin;
+    private final BarrelDatabase barrelDatabase;
+    private final Map<UUID, Long> playerTimers = new HashMap<>();
 
     public PlayerMoveListener(Proficisci plugin, BarrelDatabase barrelDatabase) {
         this.plugin = plugin;
@@ -30,40 +27,38 @@ public class PlayerMoveListener implements Listener {
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
-        Location loc = player.getLocation();
+        Location playerLocation = player.getLocation();
 
-        List<Location> barrelLocations;
         try {
-            barrelLocations = barrelDatabase.loadBarrelLocations();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return;
-        }
+            for (Map.Entry<String, Location> entry : barrelDatabase.loadTeleportLocations().entrySet()) {
+                Location barrelLocation = entry.getValue();
+                if (playerLocation.getWorld().equals(barrelLocation.getWorld()) &&
+                        playerLocation.distance(barrelLocation) <= 3) {
 
-        for (Location barrelLoc : barrelLocations) {
-            if (loc.distance(barrelLoc) <= 3) {
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        if (player.isOnline() && player.getLocation().distance(barrelLoc) <= 3) {
-                            openTeleportInventory(player, barrelLocations);
+                    if (!playerTimers.containsKey(player.getUniqueId())) {
+                        playerTimers.put(player.getUniqueId(), System.currentTimeMillis());
+                    } else {
+                        long timeSpent = System.currentTimeMillis() - playerTimers.get(player.getUniqueId());
+                        if (timeSpent >= 10000) { // 10 seconds
+                            openTeleportMenu(player, barrelLocation);
+                            playerTimers.remove(player.getUniqueId());
                         }
                     }
-                }.runTaskLater(plugin, 200L); // 200 ticks = 10 seconds
-                return;
+                    return;
+                }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            player.sendMessage(Component.text("An error occurred while checking barrel locations."));
         }
+
+        playerTimers.remove(player.getUniqueId()); // Reset timer if player is out of range
     }
 
-    private void openTeleportInventory(Player player, List<Location> barrelLocations) {
-        Inventory inv = Bukkit.createInventory(null, 9, Component.text("Teleport Options"));
-        for (Location loc : barrelLocations) {
-            ItemStack item = new ItemStack(Material.ENDER_PEARL);
-            ItemMeta meta = item.getItemMeta();
-            meta.displayName(Component.text("Teleport to " + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ()));
-            item.setItemMeta(meta);
-            inv.addItem(item);
+    private void openTeleportMenu(Player player, Location currentLocation) {
+        InventoryClickListener inventoryClickListener = plugin.getInventoryClickListener();
+        if (inventoryClickListener != null) {
+            inventoryClickListener.openTeleportMenu(player, 1, currentLocation);
         }
-        player.openInventory(inv);
     }
 }

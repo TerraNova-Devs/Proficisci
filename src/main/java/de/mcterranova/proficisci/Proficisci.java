@@ -20,6 +20,7 @@ import java.util.Collections;
 public final class Proficisci extends JavaPlugin {
     private HikariCPDatabase hikariCPDatabase;
     private BarrelDatabase barrelDatabase;
+    private InventoryClickListener inventoryClickListener;
 
     @Override
     public void onEnable() {
@@ -32,29 +33,14 @@ public final class Proficisci extends JavaPlugin {
             return;
         }
 
-        // Create the custom barrel item
-        ItemStack specialBarrel = new ItemStack(Material.BARREL);
-        ItemMeta meta = specialBarrel.getItemMeta();
-        if (meta != null) {
-            meta.displayName(Component.text("Reiseschiff-Block"));
-            meta.lore(Collections.singletonList(Component.text("This is a special barrel used for teleportation.")));
-            specialBarrel.setItemMeta(meta);
-        }
-
         // Register the custom crafting recipe
-        NamespacedKey key = new NamespacedKey(this, "special_barrel");
-        ShapedRecipe recipe = new ShapedRecipe(key, specialBarrel);
-        recipe.shape("EPE", "PBP", "EPE");
-        recipe.setIngredient('E', Material.ENDER_PEARL);
-        recipe.setIngredient('P', Material.OAK_PLANKS);
-        recipe.setIngredient('B', Material.BARREL);
-
-        Bukkit.addRecipe(recipe);
+        Bukkit.addRecipe(getSpecialBarrelRecipe());
 
         // Register events and commands
         getServer().getPluginManager().registerEvents(new BarrelListener(barrelDatabase, this), this);
         getServer().getPluginManager().registerEvents(new PlayerMoveListener(this, barrelDatabase), this);
-        getServer().getPluginManager().registerEvents(new InventoryClickListener(), this);
+        inventoryClickListener = new InventoryClickListener(barrelDatabase);
+        getServer().getPluginManager().registerEvents(inventoryClickListener, this);
     }
 
     @Override
@@ -63,6 +49,27 @@ public final class Proficisci extends JavaPlugin {
         if (hikariCPDatabase != null) {
             hikariCPDatabase.closeConnection();
         }
+    }
+
+    public ItemStack getSpecialBarrelItem() {
+        ItemStack specialBarrel = new ItemStack(Material.BARREL);
+        ItemMeta meta = specialBarrel.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Component.text("Reiseschiff-Block"));
+            meta.lore(Collections.singletonList(Component.text("This is a special barrel used for teleportation.")));
+            specialBarrel.setItemMeta(meta);
+        }
+        return specialBarrel;
+    }
+
+    public ShapedRecipe getSpecialBarrelRecipe() {
+        NamespacedKey key = new NamespacedKey(this, "special_barrel");
+        ShapedRecipe recipe = new ShapedRecipe(key, getSpecialBarrelItem());
+        recipe.shape("EPE", "PBP", "EPE");
+        recipe.setIngredient('E', Material.ENDER_PEARL);
+        recipe.setIngredient('P', Material.OAK_PLANKS);
+        recipe.setIngredient('B', Material.BARREL);
+        return recipe;
     }
 
     public boolean isSpecialBarrel(ItemStack item) {
@@ -76,5 +83,9 @@ public final class Proficisci extends JavaPlugin {
         return Component.text("Reiseschiff-Block").equals(meta.displayName()) &&
                 meta.lore() != null &&
                 meta.lore().contains(Component.text("This is a special barrel used for teleportation."));
+    }
+
+    public InventoryClickListener getInventoryClickListener() {
+        return inventoryClickListener;
     }
 }

@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS barrel_locations (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    region_name VARCHAR(255) NOT NULL,
     world VARCHAR(255) NOT NULL,
     x DOUBLE NOT NULL,
     y DOUBLE NOT NULL,

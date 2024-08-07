@@ -12,7 +12,9 @@ import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.sql.SQLException;
@@ -52,13 +54,44 @@ public class BarrelListener implements Listener {
 
             // Add the barrel location to the list and database
             try {
-                barrelDatabase.saveBarrelLocation(block.getLocation());
+                String regionName = regions.iterator().next().getId();
+                barrelDatabase.saveBarrelLocation(block.getLocation(), regionName);
                 event.getPlayer().sendMessage(Component.text("Special barrel placed successfully!"));
             } catch (SQLException e) {
                 e.printStackTrace();
                 event.getPlayer().sendMessage(Component.text("An error occurred while saving the barrel location."));
                 event.setCancelled(true);
             }
+        }
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        Block block = event.getBlock();
+        try {
+            if (barrelDatabase.isSpecialBarrelLocation(block.getLocation())) {
+                barrelDatabase.deleteBarrelLocation(block.getLocation());
+                event.setDropItems(false); // Prevent default item drop
+                event.getPlayer().sendMessage(Component.text("Special barrel removed."));
+                block.getWorld().dropItemNaturally(block.getLocation(), plugin.getSpecialBarrelItem());
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            event.getPlayer().sendMessage(Component.text("An error occurred while removing the barrel location."));
+        }
+    }
+
+    @EventHandler
+    public void onBlockDropItem(BlockDropItemEvent event) {
+        Block block = event.getBlock();
+        try {
+            if (barrelDatabase.isSpecialBarrelLocation(block.getLocation())) {
+                event.setCancelled(true); // Cancel the default drop event
+                block.getWorld().dropItemNaturally(block.getLocation(), plugin.getSpecialBarrelItem());
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            event.getPlayer().sendMessage(Component.text("An error occurred while handling the item drop."));
         }
     }
 }
