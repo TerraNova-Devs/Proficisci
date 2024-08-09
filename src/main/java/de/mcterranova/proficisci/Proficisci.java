@@ -1,11 +1,10 @@
 package de.mcterranova.proficisci;
 
+import de.mcterranova.proficisci.command.ShipCommand;
 import de.mcterranova.proficisci.database.HikariCPDatabase;
 import de.mcterranova.proficisci.database.BarrelDatabase;
-import de.mcterranova.proficisci.listener.BarrelListener;
-import de.mcterranova.proficisci.listener.InventoryClickListener;
-import de.mcterranova.proficisci.listener.PlayerMoveListener;
-import net.kyori.adventure.text.Component;
+import de.mcterranova.proficisci.listener.*;
+import de.mcterranova.proficisci.utils.SilverManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -13,39 +12,49 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import net.kyori.adventure.text.Component;
 
 import java.sql.SQLException;
 import java.util.Collections;
 
 public final class Proficisci extends JavaPlugin {
+    private static Proficisci instance;
     private HikariCPDatabase hikariCPDatabase;
     private BarrelDatabase barrelDatabase;
     private InventoryClickListener inventoryClickListener;
 
+    public static Proficisci getInstance() {
+        return instance;
+    }
+
     @Override
     public void onEnable() {
+        instance = this;
+
         try {
-            hikariCPDatabase = new HikariCPDatabase(this);
-            barrelDatabase = new BarrelDatabase(hikariCPDatabase);
+            SilverManager.init();
+            hikariCPDatabase = HikariCPDatabase.getInstance();
+            barrelDatabase = BarrelDatabase.getInstance();
+
+            getServer().getPluginManager().registerEvents(new BarrelListener(this), this);
+            getServer().getPluginManager().registerEvents(new PlayerMoveListener(this), this);
+            inventoryClickListener = new InventoryClickListener();
+            getServer().getPluginManager().registerEvents(inventoryClickListener, this);
+            getServer().getPluginManager().registerEvents(new BarrelClickListener(this), this);
+            getCommand("ship").setExecutor(new ShipCommand());
         } catch (SQLException e) {
             e.printStackTrace();
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
 
-        // Register the custom crafting recipe
         Bukkit.addRecipe(getSpecialBarrelRecipe());
 
-        // Register events and commands
-        getServer().getPluginManager().registerEvents(new BarrelListener(barrelDatabase, this), this);
-        getServer().getPluginManager().registerEvents(new PlayerMoveListener(this, barrelDatabase), this);
-        inventoryClickListener = new InventoryClickListener(barrelDatabase);
-        getServer().getPluginManager().registerEvents(inventoryClickListener, this);
+
     }
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
         if (hikariCPDatabase != null) {
             hikariCPDatabase.closeConnection();
         }

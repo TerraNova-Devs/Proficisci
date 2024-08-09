@@ -2,63 +2,67 @@ package de.mcterranova.proficisci.listener;
 
 import de.mcterranova.proficisci.Proficisci;
 import de.mcterranova.proficisci.database.BarrelDatabase;
+import de.mcterranova.proficisci.utils.ChatUtils;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerMoveEvent;
 
 import java.sql.SQLException;
+import java.util.UUID;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 public class PlayerMoveListener implements Listener {
     private final Proficisci plugin;
     private final BarrelDatabase barrelDatabase;
-    private final Map<UUID, Long> playerTimers = new HashMap<>();
+    private final Map<UUID, Long> playerStayTimes;
 
-    public PlayerMoveListener(Proficisci plugin, BarrelDatabase barrelDatabase) {
+    public PlayerMoveListener(Proficisci plugin) throws SQLException {
         this.plugin = plugin;
-        this.barrelDatabase = barrelDatabase;
+        this.barrelDatabase = BarrelDatabase.getInstance();
+        this.playerStayTimes = new HashMap<>();
     }
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
-        Location playerLocation = player.getLocation();
+        Location to = event.getTo();
+        if (to == null) return;
 
         try {
-            for (Map.Entry<String, Location> entry : barrelDatabase.loadTeleportLocations().entrySet()) {
-                Location barrelLocation = entry.getValue();
-                if (playerLocation.getWorld().equals(barrelLocation.getWorld()) &&
-                        playerLocation.distance(barrelLocation) <= 3) {
-
-                    if (!playerTimers.containsKey(player.getUniqueId())) {
-                        playerTimers.put(player.getUniqueId(), System.currentTimeMillis());
-                    } else {
-                        long timeSpent = System.currentTimeMillis() - playerTimers.get(player.getUniqueId());
-                        if (timeSpent >= 10000) { // 10 seconds
-                            openTeleportMenu(player, barrelLocation);
-                            playerTimers.remove(player.getUniqueId());
-                        }
+            if (isNearSpecialBarrelLocation(to)) {
+                if (playerStayTimes.containsKey(player.getUniqueId())) {
+                    long stayTime = playerStayTimes.get(player.getUniqueId());
+                    if (System.currentTimeMillis() - stayTime > 10000) { // 10 seconds
+                        playerStayTimes.remove(player.getUniqueId());
+                        plugin.getInventoryClickListener().openTeleportMenu(player, 1, to);
                     }
-                    return;
+                } else {
+                    if(player.hasMetadata("travelInv")) {
+                        ChatUtils.sendMessage(player, "Kapitän: Ahoi! Mach es dir gemütlich in 10 Sekunden geht es los.");
+                        playerStayTimes.put(player.getUniqueId(), System.currentTimeMillis());
+                    }
                 }
+            } else {
+                if(playerStayTimes.containsKey(player.getUniqueId()))
+                    ChatUtils.sendMessage(player, "Kapitän: Vielleicht ein anderes mal.");
+                playerStayTimes.remove(player.getUniqueId());
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            player.sendMessage(Component.text("An error occurred while checking barrel locations."));
         }
-
-        playerTimers.remove(player.getUniqueId()); // Reset timer if player is out of range
     }
 
-    private void openTeleportMenu(Player player, Location currentLocation) {
-        InventoryClickListener inventoryClickListener = plugin.getInventoryClickListener();
-        if (inventoryClickListener != null) {
-            inventoryClickListener.openTeleportMenu(player, 1, currentLocation);
+    private boolean isNearSpecialBarrelLocation(Location loc) throws SQLException {
+        Map<String, Location> specialBarrelLocations = barrelDatabase.loadTeleportLocations();
+        for (Location specialLoc : specialBarrelLocations.values()) {
+            if (loc.getWorld().equals(specialLoc.getWorld()) && loc.distance(specialLoc) <= 3) {
+                return true;
+            }
         }
+        return false;
     }
 }
