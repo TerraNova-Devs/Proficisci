@@ -41,7 +41,7 @@ public class PlayerMoveListener implements Listener {
                         plugin.getInventoryClickListener().openTeleportMenu(player, 1, to);
                     }
                 } else {
-                    if(player.hasMetadata("travelInv")) {
+                    if(!player.hasMetadata("travelInv")) {
                         ChatUtils.sendMessage(player, "Kapitän: Ahoi! Mach es dir gemütlich in 10 Sekunden geht es los.");
                         playerStayTimes.put(player.getUniqueId(), System.currentTimeMillis());
                     }

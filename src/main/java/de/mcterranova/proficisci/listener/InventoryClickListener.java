@@ -30,7 +30,8 @@ public class InventoryClickListener implements Listener {
     private final BarrelDatabase barrelDatabase;
     private static final int INVENTORY_SIZE = 54;
     private static final int ITEMS_PER_PAGE = 36; // 9x4 (excluding border and navigation slots)
-    private static final int TELEPORT_COST = 5; // Cost in silver (iron nuggets)
+    private static final int TELEPORT_COST = 2; // Cost in silver
+    private static final int DISTANCE = 6000;
 
     public InventoryClickListener() throws SQLException {
         this.barrelDatabase = BarrelDatabase.getInstance();
@@ -131,6 +132,8 @@ public class InventoryClickListener implements Listener {
                 Map.Entry<String, Location> entry = locationList.get(i);
                 String regionName = entry.getKey();
                 Location loc = entry.getValue();
+                if (loc.distance(player.getLocation()) > DISTANCE)
+                    continue;
 
                 ItemStack locationItem;
                 ItemMeta meta;
@@ -148,6 +151,7 @@ public class InventoryClickListener implements Listener {
                     meta = locationItem.getItemMeta();
                     if (meta != null) {
                         meta.displayName(ChatUtils.stringToComponent(regionName));
+                        meta.lore(Collections.singletonList(ChatUtils.stringToComponent("x:" + loc.x() + ",  y:" + loc.y() + ", z:" + loc.z())));
                         locationItem.setItemMeta(meta);
                     }
                 }

@@ -9,6 +9,7 @@ import de.mcterranova.proficisci.Proficisci;
 import de.mcterranova.proficisci.database.BarrelDatabase;
 import de.mcterranova.proficisci.utils.ChatUtils;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -56,7 +57,7 @@ public class BarrelListener implements Listener {
                 BarrelDatabase barrelDatabase = BarrelDatabase.getInstance();
                 String regionName = regions.iterator().next().getId();
 
-                if(barrelDatabase.regionHasBarrel(regionName)) {
+                if(!barrelDatabase.regionHasBarrel(regionName)) {
                     barrelDatabase.saveBarrelLocation(block.getLocation(), regionName, regionName, event.getPlayer().getUniqueId());
                     ChatUtils.sendSuccessMessage(player, "Schiffsblock erfolgreich platziert.");
                 } else {
@@ -80,10 +81,13 @@ public class BarrelListener implements Listener {
         try {
             BarrelDatabase barrelDatabase = BarrelDatabase.getInstance();
             if (barrelDatabase.isSpecialBarrelLocation(block.getLocation())) {
-                if(barrelDatabase.getShipOwner(block.getLocation()) == player.getUniqueId()) {
+                if(barrelDatabase.getShipOwner(block.getLocation()).equals(player.getUniqueId())) {
                     barrelDatabase.deleteBarrelLocation(block.getLocation());
                     ChatUtils.sendSuccessMessage(player, "Schiff entfernt.");
                     block.getWorld().dropItemNaturally(block.getLocation(), plugin.getSpecialBarrelItem());
+                    event.setDropItems(false);
+                } else {
+                    event.setCancelled(true);
                 }
             }
         } catch (SQLException e) {
