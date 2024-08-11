@@ -13,9 +13,9 @@ public class HikariCPDatabase {
 
     private HikariCPDatabase() throws SQLException {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:mysql://localhost:3306/minecraft");
-        config.setUsername("root");
-        config.setPassword("");
+        config.setJdbcUrl("jdbc:mysql://localhost:3306/network");
+        config.setUsername("minecraft");
+        config.setPassword("minecraft");
         config.setMaximumPoolSize(10);
         config.setMinimumIdle(2);
         config.setConnectionTimeout(30000);
