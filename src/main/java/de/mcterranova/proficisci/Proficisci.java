@@ -5,17 +5,21 @@ import de.mcterranova.proficisci.database.HikariCPDatabase;
 import de.mcterranova.proficisci.database.BarrelDatabase;
 import de.mcterranova.proficisci.listener.*;
 import de.mcterranova.proficisci.utils.SilverManager;
+import net.kyori.adventure.text.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import net.kyori.adventure.text.Component;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public final class Proficisci extends JavaPlugin {
     private static Proficisci instance;
@@ -65,7 +69,10 @@ public final class Proficisci extends JavaPlugin {
         ItemMeta meta = specialBarrel.getItemMeta();
         if (meta != null) {
             meta.displayName(Component.text("Reiseschiff-Block"));
-            meta.lore(Collections.singletonList(Component.text("This is a special barrel used for teleportation.")));
+            List<TextComponent> lores = new ArrayList<>();
+            lores.add(Component.text("Kann nur in Ozean oder River Biomen platziert werden."));
+            lores.add(Component.text("Dient zur Schnellreise zu anderen Schiffen innerhalb von <=6000 Blöcken."));
+            meta.lore(lores);
             specialBarrel.setItemMeta(meta);
         }
         return specialBarrel;
@@ -74,9 +81,14 @@ public final class Proficisci extends JavaPlugin {
     public ShapedRecipe getSpecialBarrelRecipe() {
         NamespacedKey key = new NamespacedKey(this, "special_barrel");
         ShapedRecipe recipe = new ShapedRecipe(key, getSpecialBarrelItem());
+        RecipeChoice choice = new RecipeChoice.MaterialChoice(
+                Material.OAK_PLANKS, Material.SPRUCE_PLANKS, Material.JUNGLE_PLANKS,
+                Material.DARK_OAK_PLANKS, Material.ACACIA_PLANKS, Material.MANGROVE_PLANKS,
+                Material.BAMBOO_PLANKS, Material.BIRCH_PLANKS, Material.CHERRY_PLANKS,
+                Material.CRIMSON_PLANKS, Material.WARPED_PLANKS);
         recipe.shape("EPE", "PBP", "EPE");
         recipe.setIngredient('E', Material.ENDER_PEARL);
-        recipe.setIngredient('P', Material.OAK_PLANKS);
+        recipe.setIngredient('P', choice);
         recipe.setIngredient('B', Material.BARREL);
         return recipe;
     }
@@ -91,7 +103,8 @@ public final class Proficisci extends JavaPlugin {
         }
         return Component.text("Reiseschiff-Block").equals(meta.displayName()) &&
                 meta.lore() != null &&
-                meta.lore().contains(Component.text("This is a special barrel used for teleportation."));
+                meta.lore().contains(Component.text("Kann nur in Ozean oder River Biomen platziert werden.")) &&
+                meta.lore().contains(Component.text("Dient zur Schnellreise zu anderen Schiffen innerhalb von <=6000 Blöcken."));
     }
 
     public InventoryClickListener getInventoryClickListener() {

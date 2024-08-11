@@ -8,7 +8,7 @@ import java.util.Random;
 
 public class ChatUtils {
 
-    public static String chatPrefix = "[Reise] ";
+    public static String chatPrefix = "";
 
     public static void sendMessage(Player p, String message) {
         p.sendMessage(MiniMessage.miniMessage().deserialize("<gradient:#88EBFF:#C9FFC2>" + chatPrefix + message + "</gradient>"));
