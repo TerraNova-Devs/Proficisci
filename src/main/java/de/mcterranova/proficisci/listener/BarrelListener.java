@@ -64,7 +64,7 @@ public class BarrelListener implements Listener {
                     ChatUtils.sendErrorMessage(player, "In dieser Stadt gibt es bereits ein Schiff.");
                     event.setCancelled(true);
                 }
-
+                Proficisci.getInstance().specialBarrelLocations = barrelDatabase.loadTeleportLocations();
             } catch (SQLException e) {
                 e.printStackTrace();
                 ChatUtils.sendErrorMessage(player, "An error occurred while saving the barrel location.");
@@ -90,6 +90,7 @@ public class BarrelListener implements Listener {
                     event.setCancelled(true);
                 }
             }
+            Proficisci.getInstance().specialBarrelLocations = barrelDatabase.loadTeleportLocations();
         } catch (SQLException e) {
             e.printStackTrace();
             ChatUtils.sendErrorMessage(player, "An error occurred while removing the barrel location.");
