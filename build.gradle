@@ -20,6 +20,10 @@ repositories {
         name = 'enginehub-repo'
         url = 'https://maven.enginehub.org/repo/'
     }
+    maven {
+        name = "Oraxen"
+        url "https://repo.oraxen.com/releases"
+    }
 }
 
 dependencies {
@@ -27,6 +31,7 @@ dependencies {
     implementation('com.zaxxer:HikariCP:5.0.1')
     compileOnly('com.sk89q.worldguard:worldguard-bukkit:7.0.11-SNAPSHOT')
     implementation 'org.ow2.asm:asm:9.4'
+    compileOnly 'io.th0rgal:oraxen:1.180.0'
 }
 
 java {

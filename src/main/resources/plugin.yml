@@ -2,9 +2,14 @@ name: Proficisci
 version: 1.0.0
 main: de.mcterranova.proficisci.Proficisci
 api-version: 1.21
+authors: [Bastizeit, gerryxn]
+prefix: TerraNova
+website: mcterranova.de
+description: Plugin dedicated to voyage.
 commands:
   ship:
     description: Manage ships
     usage: /ship <list|tp|name|view>
     permission: proficisci.admin
     permission-message: You do not have permission to use this command.
+depend: [Oraxen]
