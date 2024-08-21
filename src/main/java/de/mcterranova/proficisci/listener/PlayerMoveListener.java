@@ -66,7 +66,7 @@ public class PlayerMoveListener implements Listener {
     }
 
     private boolean isNearSpecialBarrelLocation(Location loc) throws SQLException {
-        Map<String, Location> specialBarrelLocations = barrelDatabase.loadTeleportLocations();
+        Map<String, Location> specialBarrelLocations = Proficisci.getInstance().specialBarrelLocations;
         for (Location specialLoc : specialBarrelLocations.values()) {
             if (loc.getWorld().equals(specialLoc.getWorld()) && loc.distance(specialLoc) <= 3) {
                 return true;

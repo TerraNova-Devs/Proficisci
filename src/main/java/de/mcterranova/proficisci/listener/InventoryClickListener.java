@@ -30,7 +30,7 @@ public class InventoryClickListener implements Listener {
     private final BarrelDatabase barrelDatabase;
     private static final int INVENTORY_SIZE = 54;
     private static final int ITEMS_PER_PAGE = 36; // 9x4 (excluding border and navigation slots)
-    private static final int TELEPORT_COST = 2; // Cost in silver
+    private static final int TELEPORT_COST = 1; // Cost in silver
     private static final int DISTANCE = 6000;
 
     public InventoryClickListener() throws SQLException {
@@ -86,7 +86,8 @@ public class InventoryClickListener implements Listener {
                     String regionName = title.substring("Bestätige Reise zu ".length());
                     Location targetLoc = locations.get(regionName);
                     if (targetLoc != null) {
-                        if (chargePlayer(player, TELEPORT_COST)) {
+
+                        if(!(chargeStrict(player,SilverManager.get().placeholder(),TELEPORT_COST,true) == -1)) {
                             Location safeLocation = getSafeLocation(targetLoc);
                             playTeleportEffects(player.getLocation());
                             player.teleport(safeLocation);
@@ -230,6 +231,7 @@ public class InventoryClickListener implements Listener {
         return loc.getBlock().isPassable() && loc.add(0, 1, 0).getBlock().isPassable();
     }
 
+    @Deprecated
     private boolean chargePlayer(Player player, int cost) {
         ItemStack[] contents = player.getInventory().getContents();
         int totalSilver = 0;
@@ -261,6 +263,38 @@ public class InventoryClickListener implements Listener {
             return true;
         }
         return false;
+    }
+
+    private Integer chargeStrict(Player p, ItemStack item, int amount, boolean onlyFullCharge) {
+        ItemStack[] stacks = p.getInventory().getContents();
+        int total = 0;
+        for (ItemStack stack : stacks) {
+            if (stack == null || !stack.isSimilar(item)) continue;
+            total += stack.getAmount();
+        }
+        if(onlyFullCharge && total < amount) return -1;
+
+        total = amount;
+
+
+        for (int i = 0; i < stacks.length; i++) {
+            if (stacks[i] == null || !stacks[i].isSimilar(item)) continue;
+
+
+            int stackAmount = stacks[i].getAmount();
+            int n = total;
+            if(stackAmount < total) {
+                stacks[i] = null;
+                total -= stackAmount;
+            } else {
+                stacks[i].setAmount(stackAmount - total);
+                total -= total;
+                break;
+            }
+        }
+        p.getInventory().setContents(stacks);
+        p.updateInventory();
+        return amount - total;
     }
 
     private void playTeleportEffects(Location location) {

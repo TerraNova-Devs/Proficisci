@@ -7,6 +7,7 @@ import de.mcterranova.proficisci.listener.*;
 import de.mcterranova.proficisci.utils.SilverManager;
 import net.kyori.adventure.text.TextComponent;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -20,12 +21,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public final class Proficisci extends JavaPlugin {
     private static Proficisci instance;
     private HikariCPDatabase hikariCPDatabase;
     private BarrelDatabase barrelDatabase;
     private InventoryClickListener inventoryClickListener;
+    public Map<String, Location> specialBarrelLocations;
 
     public static Proficisci getInstance() {
         return instance;
@@ -46,6 +49,7 @@ public final class Proficisci extends JavaPlugin {
             getServer().getPluginManager().registerEvents(inventoryClickListener, this);
             getServer().getPluginManager().registerEvents(new BarrelClickListener(this), this);
             getCommand("ship").setExecutor(new ShipCommand());
+            specialBarrelLocations = barrelDatabase.loadTeleportLocations();
         } catch (SQLException e) {
             e.printStackTrace();
             getServer().getPluginManager().disablePlugin(this);
