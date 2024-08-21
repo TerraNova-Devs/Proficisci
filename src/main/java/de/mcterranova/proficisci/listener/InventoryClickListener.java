@@ -4,6 +4,7 @@ import de.mcterranova.proficisci.database.BarrelDatabase;
 import de.mcterranova.proficisci.Proficisci;
 import de.mcterranova.proficisci.utils.ChatUtils;
 import de.mcterranova.proficisci.utils.SilverManager;
+import io.th0rgal.oraxen.api.OraxenItems;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import org.bukkit.Bukkit;
@@ -87,7 +88,7 @@ public class InventoryClickListener implements Listener {
                     Location targetLoc = locations.get(regionName);
                     if (targetLoc != null) {
 
-                        if(!(chargeStrict(player,SilverManager.get().placeholder(),TELEPORT_COST,true) == -1)) {
+                        if(!(chargeStrict(player, OraxenItems.getItemById("terranova_silver").build(),TELEPORT_COST,true) == -1)) {
                             Location safeLocation = getSafeLocation(targetLoc);
                             playTeleportEffects(player.getLocation());
                             player.teleport(safeLocation);
