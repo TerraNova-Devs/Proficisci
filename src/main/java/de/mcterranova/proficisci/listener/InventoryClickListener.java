@@ -2,8 +2,13 @@ package de.mcterranova.proficisci.listener;
 
 import de.mcterranova.proficisci.database.BarrelDatabase;
 import de.mcterranova.proficisci.Proficisci;
-import de.mcterranova.proficisci.utils.ChatUtils;
+import de.mcterranova.proficisci.utils.Chat;
 import de.mcterranova.proficisci.utils.SilverManager;
+import de.mcterranova.proficisci.utils.roseItem;
+import de.terranova.nations.NationsPlugin;
+import de.terranova.nations.api.SettlementAPI;
+import de.terranova.nations.settlements.AccessLevelEnum;
+import de.terranova.nations.settlements.Settlement;
 import io.th0rgal.oraxen.api.OraxenItems;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -64,13 +69,13 @@ public class InventoryClickListener implements Listener {
                 }
 
                 if (item.getType() == Material.ENDER_PEARL) {
-                    String regionName = ((TextComponent) item.getItemMeta().displayName()).content();
+                    String regionName = ((TextComponent) Objects.requireNonNull(item.getItemMeta().displayName())).content().replaceAll(" ", "_");
                     Location targetLoc = locations.get(regionName);
 
                     if (targetLoc != null) {
                         confirmTeleport(player, targetLoc, regionName);
                     } else {
-                        ChatUtils.sendErrorMessage(player, "Reiseziel nicht gefunden.");
+                        player.sendMessage(Chat.errorFade("Reiseziel nicht gefunden."));
                     }
                 }
             } else if (title.startsWith("Bestätige Reise zu ")) {
@@ -93,12 +98,12 @@ public class InventoryClickListener implements Listener {
                             playTeleportEffects(player.getLocation());
                             player.teleport(safeLocation);
                             playTeleportEffects(safeLocation);
-                            ChatUtils.sendSuccessMessage(player, "Du bist in " + regionName + " angekommen.");
+                            player.sendMessage(Chat.greenFade("Du bist in " + regionName + " angekommen."));
                         } else {
                             player.sendMessage(Component.text("Du brauchst mindestens " + TELEPORT_COST + " Silber für die Reise."));
                         }
                     } else {
-                        ChatUtils.sendErrorMessage(player, "Reiseziel nicht gefunden.");
+                        player.sendMessage(Chat.errorFade("Reiseziel nicht gefunden."));
                     }
                 } else if (item.getType() == Material.RED_WOOL) {
                     player.closeInventory();
@@ -111,12 +116,10 @@ public class InventoryClickListener implements Listener {
         Inventory teleportMenu = Bukkit.createInventory(null, INVENTORY_SIZE, Component.text("Reise Möglichkeiten - Seite " + page));
 
         // Add border
-        ItemStack borderItem = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta borderMeta = borderItem.getItemMeta();
-        if (borderMeta != null) {
-            borderMeta.displayName(Component.text(" "));
-            borderItem.setItemMeta(borderMeta);
-        }
+        ItemStack borderItem = new roseItem.Builder()
+                .material(Material.BLACK_STAINED_GLASS_PANE)
+                .displayName("")
+                .build().stack;
         for (int i = 0; i < INVENTORY_SIZE; i++) {
             if (i < 9 || i >= INVENTORY_SIZE - 9 || i % 9 == 0 || i % 9 == 8) {
                 teleportMenu.setItem(i, borderItem);
@@ -138,31 +141,31 @@ public class InventoryClickListener implements Listener {
                     continue;
 
                 ItemStack locationItem;
-                ItemMeta meta;
+                Optional<Settlement> settle = SettlementAPI.getSettlement(loc);
+                String SettleMajor = settle.isEmpty() ? "Nicht-Spielerstadt" : Bukkit.getOfflinePlayer(settle.get().getEveryMemberNameWithCertainAccessLevel(AccessLevelEnum.MAJOR).stream().findFirst().get()).getName();
 
                 if (currentLocation != null && loc.distance(currentLocation) <= 3) {
                     // Mark current location
-                    locationItem = new ItemStack(Material.BARRIER);
-                    meta = locationItem.getItemMeta();
-                    if (meta != null) {
-                        meta.displayName(ChatUtils.returnGreenFade(regionName + " (Deine Position)"));
-                        locationItem.setItemMeta(meta);
-                    }
+                    locationItem = new roseItem.Builder()
+                            .material(Material.BARRIER)
+                            .displayName(Chat.greenFade("<b>" + regionName.replaceAll("_", " ") + " (Deine Position)"))
+                            .addLore("Major: " + SettleMajor)
+                            .addLore("x:" + loc.x() + ",  y:" + loc.y() + ", z:" + loc.z())
+                            .build().stack;
                 } else {
-                    locationItem = new ItemStack(Material.ENDER_PEARL);
-                    meta = locationItem.getItemMeta();
-                    if (meta != null) {
-                        meta.displayName(ChatUtils.stringToComponent(regionName));
-                        meta.lore(Collections.singletonList(ChatUtils.stringToComponent("x:" + loc.x() + ",  y:" + loc.y() + ", z:" + loc.z())));
-                        locationItem.setItemMeta(meta);
-                    }
+                    locationItem = new roseItem.Builder()
+                            .material(Material.ENDER_PEARL)
+                            .displayName(Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
+                            .addLore("Major: " + SettleMajor)
+                            .addLore("x:" + loc.x() + ",  y:" + loc.y() + ", z:" + loc.z())
+                            .build().stack;
                 }
 
                 teleportMenu.addItem(locationItem);
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            ChatUtils.sendErrorMessage(player, "An error occurred while loading teleport locations.");
+            player.sendMessage(Chat.errorFade("An error occurred while loading teleport locations."));
         }
 
         // Add navigation arrows
@@ -178,12 +181,11 @@ public class InventoryClickListener implements Listener {
 
         Map<String, Location> locations = barrelDatabase.loadTeleportLocations();
         if ((page * ITEMS_PER_PAGE) < locations.size()) {
-            ItemStack nextPage = new ItemStack(Material.ARROW);
-            ItemMeta nextMeta = nextPage.getItemMeta();
-            if (nextMeta != null) {
-                nextMeta.displayName(Component.text("Nächste Seite"));
-                nextPage.setItemMeta(nextMeta);
-            }
+
+            ItemStack nextPage = new roseItem.Builder()
+                    .material(Material.ARROW)
+                    .displayName("Nächste Seite")
+                    .build().stack;
             teleportMenu.setItem(INVENTORY_SIZE - 1, nextPage);
         }
 

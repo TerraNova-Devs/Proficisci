@@ -5,7 +5,6 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import de.mcterranova.proficisci.utils.ChatUtils;
 
 /**
  * @author sakubami
@@ -41,7 +40,7 @@ public class SilverManager {
         ItemMeta meta = itemStack.getItemMeta();
         meta.addEnchant(Enchantment.CHANNELING, 1, true);
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-        meta.displayName(ChatUtils.stringToComponent("<gradient:#AAA9AD:#D8D8D8><bold>Silber</bold></gradient>"));
+        meta.displayName(Chat.stringToComponent("<gradient:#AAA9AD:#D8D8D8><bold>Silber</bold></gradient>"));
         itemStack.setItemMeta(meta);
         return itemStack;
     }

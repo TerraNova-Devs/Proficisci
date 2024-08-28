@@ -1,7 +1,7 @@
 package de.mcterranova.proficisci.command;
 
 import de.mcterranova.proficisci.services.ShipService;
-import de.mcterranova.proficisci.utils.ChatUtils;
+import de.mcterranova.proficisci.utils.Chat;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -38,10 +38,10 @@ public class ShipViewCommand implements CommandExecutor {
             if (loc != null) {
                 UUID owner = shipService.getShipOwner(args[1]);
                 String name = shipService.getShipName(args[1]);
-                ChatUtils.sendSuccessMessage(player, "Schiff Info:");
-                ChatUtils.sendSuccessMessage(player, "Name: " + name);
-                ChatUtils.sendSuccessMessage(player, "Owner: " + owner);
-                ChatUtils.sendSuccessMessage(player, "Location: " + loc);
+                player.sendMessage(Chat.greenFade( "Schiff Info:"));
+                player.sendMessage(Chat.greenFade("Name: " + name));
+                player.sendMessage(Chat.greenFade(  "Owner: " + owner));
+                player.sendMessage(Chat.greenFade( "Location: " + loc));
             } else {
                 player.sendMessage(Component.text("Schiff nicht gefunden."));
             }
