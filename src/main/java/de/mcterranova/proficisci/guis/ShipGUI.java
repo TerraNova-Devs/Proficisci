@@ -22,7 +22,7 @@ import java.util.Optional;
 public class ShipGUI extends RoseGUI {
 
     private static final int ROWS_PER_PAGE = 5; // 9x4 (excluding border and navigation slots)
-    private static final int DISTANCE = 6000;
+    public static final int DISTANCE = 6000;
     private final RosePagination pagination = new RosePagination(this);
     private final BarrelDatabase barrelDatabase;
 

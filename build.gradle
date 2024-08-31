@@ -24,6 +24,15 @@ repositories {
         name = "Oraxen"
         url "https://repo.oraxen.com/releases"
     }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Pl3xMap"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter { includeGroup "maven.modrinth" }
+    }
 }
 
 dependencies {
@@ -33,6 +42,7 @@ dependencies {
     implementation 'org.ow2.asm:asm:9.4'
     compileOnly 'io.th0rgal:oraxen:1.180.0'
     compileOnly fileTree(dir: 'jars', include: ['*.jar'])
+    compileOnly("maven.modrinth:pl3xmap:1.21-500")
 }
 
 java {
