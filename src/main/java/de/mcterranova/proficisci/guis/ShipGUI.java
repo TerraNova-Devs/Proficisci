@@ -70,13 +70,12 @@ public class ShipGUI extends RoseGUI {
                 if (loc.distance(player.getLocation()) > DISTANCE)
                     return;
                 Optional<Settlement> settle = SettlementAPI.getSettlement(loc);
-                String SettleMajor = settle.isEmpty() ? "Nicht-Spielerstadt" : Bukkit.getOfflinePlayer(settle.get().getEveryMemberNameWithCertainAccessLevel(AccessLevelEnum.MAJOR).stream().findFirst().get()).getName();
                 RoseItem locationItem;
                 boolean test = loc.distance(currentLocation) <= 3;
                 locationItem = new RoseItem.Builder()
                         .material(test ? Material.BARRIER : Material.ENDER_PEARL)
                         .displayName(test ? Chat.greenFade("<b>" + regionName.replaceAll("_", " ") + " (Deine Position)") : Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
-                        .addLore("<red>Besitzer: <gray>" + SettleMajor,
+                        .addLore(settle.isEmpty() ? "<red>Besitzer: <gray>Server" : "<red>Besitzer: <gray>" + Bukkit.getOfflinePlayer(settle.get().getEveryMemberNameWithCertainAccessLevel(AccessLevelEnum.MAJOR).stream().findFirst().get()).getName(),
                                 "<red>Koordinaten: <gray>" + (int) loc.x() + ", " + (int) loc.y() + ", " + (int) loc.z(),
                                 "<red>Distanz: <gray>" + (int) loc.distance(currentLocation) + "m",
                                 "<red>Reisekosten: <gray>1 Silver")
