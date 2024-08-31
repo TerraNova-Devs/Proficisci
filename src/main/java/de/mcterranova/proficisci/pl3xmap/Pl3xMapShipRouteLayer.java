@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -31,19 +32,24 @@ public class Pl3xMapShipRouteLayer extends WorldLayer {
         setDefaultHidden(true);
         setPriority(100);
         setZIndex(999);
-
         Map<String, Location> locations = barrelDatabase.loadTeleportLocations();
-
         Options optionroutes;
         optionroutes = Options.builder()
-                .strokeColor(0xDD8640E6)
+                .strokeColor(0xFFDBB050)
+                //https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray
+                .strokeDashPattern("10")
+                .strokeDashOffset("10")
                 .build();
 
+        for (Location location : locations.values()) {
+
+        }
+
         locations.forEach((s, location) -> {
-            System.out.println("Test1");
             locations.forEach((s2, location2) -> {
                 if (location.equals(location2) || location.distance(location2) > ShipGUI.DISTANCE) return;
-                System.out.println("Test2");
+                if(location.x() <= location2.x()) return;
+                if(location.x() == location2.x()) if (location.y() < location2.y()) return;
                 markers.add(new Polyline(s + s2,new Point((int)location.x(),(int)location.z()),new Point((int)location2.x(),(int)location2.z())).setOptions(optionroutes));
             });
         });

@@ -80,7 +80,7 @@ public final class Proficisci extends JavaPlugin {
 
     private void pl3xmapMarkerRegistry() throws SQLException {
         this.layerRegistry = Objects.requireNonNull(Pl3xMap.api().getWorldRegistry().get("world")).getLayerRegistry();
-        layerRegistry.register("shiproutes-layer",new Pl3xMapShipRouteLayer(Objects.requireNonNull(Pl3xMap.api().getWorldRegistry().get("world"))));
+        layerRegistry.register("ship-route-layer",new Pl3xMapShipRouteLayer(Objects.requireNonNull(Pl3xMap.api().getWorldRegistry().get("world"))));
     }
 
     public ItemStack getSpecialBarrelItem() {
