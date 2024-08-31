@@ -2,8 +2,9 @@ package de.mcterranova.proficisci.listener;
 
 import de.mcterranova.proficisci.Proficisci;
 import de.mcterranova.proficisci.database.BarrelDatabase;
-import de.mcterranova.proficisci.utils.ChatUtils;
-import org.bukkit.Bukkit;
+import de.mcterranova.proficisci.guis.ShipGUI;
+import de.mcterranova.proficisci.utils.Chat;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -36,13 +37,14 @@ public class PlayerMoveListener implements Listener {
         try {
             if (isNearSpecialBarrelLocation(to)) {
                 if (!countdownTasks.containsKey(player.getUniqueId())) {
-                    ChatUtils.sendMessage(player, "Kapitän: Ahoi! Mach es dir gemütlich in 10 Sekunden geht es los.");
+                    player.sendMessage(MiniMessage.miniMessage().deserialize("<#839CEB><b>Kapitän:</b> <#83BCEB>Ahoi! Mach es dir gemütlich in 10 Sekunden geht es los."));
                     BukkitRunnable task = new BukkitRunnable() {
                         @Override
                         public void run() {
                             try {
                                 if (isNearSpecialBarrelLocation(player.getLocation())) {
-                                    plugin.getInventoryClickListener().openTeleportMenu(player, 1, player.getLocation());
+                                    //plugin.getInventoryClickListener().openTeleportMenu(player, 1, player.getLocation());
+                                    new ShipGUI(player).open();
                                     countdownTasks.remove(player.getUniqueId());
                                 }
                             } catch (SQLException e) {
@@ -57,7 +59,7 @@ public class PlayerMoveListener implements Listener {
                 if (countdownTasks.containsKey(player.getUniqueId())) {
                     countdownTasks.get(player.getUniqueId()).cancel();
                     countdownTasks.remove(player.getUniqueId());
-                    ChatUtils.sendMessage(player, "Kapitän: Vielleicht ein anderes mal.");
+                    player.sendMessage(Chat.stringToComponent("<#839CEB><b>Kapitän:</b> <#83BCEB>Vielleicht ein anderes mal."));
                 }
             }
         } catch (SQLException e) {

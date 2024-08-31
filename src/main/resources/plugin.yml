@@ -12,4 +12,5 @@ commands:
     usage: /ship <list|tp|name|view>
     permission: proficisci.admin
     permission-message: You do not have permission to use this command.
-depend: [Oraxen]
+depend: [Oraxen, Nations]
+softdepend: [Pl3xMap]

@@ -3,9 +3,15 @@ package de.mcterranova.proficisci;
 import de.mcterranova.proficisci.command.ShipCommand;
 import de.mcterranova.proficisci.database.HikariCPDatabase;
 import de.mcterranova.proficisci.database.BarrelDatabase;
+import de.mcterranova.proficisci.guiutil.RoseGUIListener;
 import de.mcterranova.proficisci.listener.*;
+import de.mcterranova.proficisci.pl3xmap.Pl3xMapShipRouteLayer;
 import de.mcterranova.proficisci.utils.SilverManager;
+import de.terranova.nations.pl3xmap.Pl3xMapSettlementLayer;
 import net.kyori.adventure.text.TextComponent;
+import net.pl3x.map.core.Pl3xMap;
+import net.pl3x.map.core.markers.layer.Layer;
+import net.pl3x.map.core.registry.Registry;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -16,19 +22,17 @@ import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import net.kyori.adventure.text.Component;
+import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class Proficisci extends JavaPlugin {
     private static Proficisci instance;
     private HikariCPDatabase hikariCPDatabase;
     private BarrelDatabase barrelDatabase;
-    private InventoryClickListener inventoryClickListener;
     public Map<String, Location> specialBarrelLocations;
+    private Registry<@NotNull Layer> layerRegistry;
 
     public static Proficisci getInstance() {
         return instance;
@@ -45,8 +49,7 @@ public final class Proficisci extends JavaPlugin {
 
             getServer().getPluginManager().registerEvents(new BarrelListener(this), this);
             getServer().getPluginManager().registerEvents(new PlayerMoveListener(this), this);
-            inventoryClickListener = new InventoryClickListener();
-            getServer().getPluginManager().registerEvents(inventoryClickListener, this);
+            getServer().getPluginManager().registerEvents(new RoseGUIListener(),this);
             getServer().getPluginManager().registerEvents(new BarrelClickListener(this), this);
             getCommand("ship").setExecutor(new ShipCommand());
             specialBarrelLocations = barrelDatabase.loadTeleportLocations();
@@ -58,7 +61,14 @@ public final class Proficisci extends JavaPlugin {
 
         Bukkit.addRecipe(getSpecialBarrelRecipe());
 
-
+        // OPTIONALER PL3XMAP SUPPORT
+        if(Bukkit.getPluginManager().getPlugin("Pl3xMap") != null) {
+            try {
+                pl3xmapMarkerRegistry();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Override
@@ -66,6 +76,11 @@ public final class Proficisci extends JavaPlugin {
         if (hikariCPDatabase != null) {
             hikariCPDatabase.closeConnection();
         }
+    }
+
+    private void pl3xmapMarkerRegistry() throws SQLException {
+        this.layerRegistry = Objects.requireNonNull(Pl3xMap.api().getWorldRegistry().get("world")).getLayerRegistry();
+        layerRegistry.register("ship-route-layer",new Pl3xMapShipRouteLayer(Objects.requireNonNull(Pl3xMap.api().getWorldRegistry().get("world"))));
     }
 
     public ItemStack getSpecialBarrelItem() {
@@ -111,7 +126,4 @@ public final class Proficisci extends JavaPlugin {
                 meta.lore().contains(Component.text("Dient zur Schnellreise zu anderen Schiffen innerhalb von <=6000 Blöcken."));
     }
 
-    public InventoryClickListener getInventoryClickListener() {
-        return inventoryClickListener;
-    }
 }

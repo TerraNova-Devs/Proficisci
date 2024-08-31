@@ -1,7 +1,7 @@
 package de.mcterranova.proficisci.command;
 
 import de.mcterranova.proficisci.services.ShipService;
-import de.mcterranova.proficisci.utils.ChatUtils;
+import de.mcterranova.proficisci.utils.Chat;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -31,7 +31,7 @@ public class ShipCommand implements CommandExecutor {
         }
         if(player.hasPermission("proficisci.admin")){
             if (args.length == 0) {
-                ChatUtils.sendErrorMessage(player,"Usage: /ship <list|tp|name|view>");
+                player.sendMessage(Chat.errorFade("Usage: /ship <list|tp|name|view>"));
                 return true;
             }
 
@@ -40,7 +40,7 @@ public class ShipCommand implements CommandExecutor {
                 return subCommand.onCommand(sender, command, label, args);
             }
 
-            ChatUtils.sendErrorMessage(player,"Usage: /ship <list|tp|name|view>");
+            player.sendMessage(Chat.errorFade("Usage: /ship <list|tp|name|view>"));
         }
         return true;
     }
