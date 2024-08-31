@@ -3,6 +3,7 @@ package de.mcterranova.proficisci;
 import de.mcterranova.proficisci.command.ShipCommand;
 import de.mcterranova.proficisci.database.HikariCPDatabase;
 import de.mcterranova.proficisci.database.BarrelDatabase;
+import de.mcterranova.proficisci.guiutil.RoseGUIListener;
 import de.mcterranova.proficisci.listener.*;
 import de.mcterranova.proficisci.utils.SilverManager;
 import net.kyori.adventure.text.TextComponent;
@@ -27,7 +28,6 @@ public final class Proficisci extends JavaPlugin {
     private static Proficisci instance;
     private HikariCPDatabase hikariCPDatabase;
     private BarrelDatabase barrelDatabase;
-    private InventoryClickListener inventoryClickListener;
     public Map<String, Location> specialBarrelLocations;
 
     public static Proficisci getInstance() {
@@ -45,8 +45,7 @@ public final class Proficisci extends JavaPlugin {
 
             getServer().getPluginManager().registerEvents(new BarrelListener(this), this);
             getServer().getPluginManager().registerEvents(new PlayerMoveListener(this), this);
-            inventoryClickListener = new InventoryClickListener();
-            getServer().getPluginManager().registerEvents(inventoryClickListener, this);
+            getServer().getPluginManager().registerEvents(new RoseGUIListener(),this);
             getServer().getPluginManager().registerEvents(new BarrelClickListener(this), this);
             getCommand("ship").setExecutor(new ShipCommand());
             specialBarrelLocations = barrelDatabase.loadTeleportLocations();
@@ -111,7 +110,4 @@ public final class Proficisci extends JavaPlugin {
                 meta.lore().contains(Component.text("Dient zur Schnellreise zu anderen Schiffen innerhalb von <=6000 Blöcken."));
     }
 
-    public InventoryClickListener getInventoryClickListener() {
-        return inventoryClickListener;
-    }
 }
