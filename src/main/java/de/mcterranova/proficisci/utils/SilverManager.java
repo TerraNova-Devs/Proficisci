@@ -1,5 +1,6 @@
 package de.mcterranova.proficisci.utils;
 
+import de.mcterranova.terranovaLib.utils.Chat;
 import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;

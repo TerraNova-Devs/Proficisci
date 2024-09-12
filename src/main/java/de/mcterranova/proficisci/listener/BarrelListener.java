@@ -7,7 +7,8 @@ import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
 import de.mcterranova.proficisci.Proficisci;
 import de.mcterranova.proficisci.database.BarrelDatabase;
-import de.mcterranova.proficisci.utils.Chat;
+
+import de.mcterranova.terranovaLib.utils.Chat;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -45,7 +46,6 @@ public class BarrelListener implements Listener {
                 RegionManager regionManager = container.get(BukkitAdapter.adapt(block.getWorld()));
                 assert regionManager != null;
                 ApplicableRegionSet regions = regionManager.getApplicableRegions(BukkitAdapter.asBlockVector(block.getLocation()));
-
                 if (regions.size() == 0) {
                     player.sendMessage(Chat.errorFade("Der Schiffsblock kann nur innerhalb einer Stadt platziert werden."));
                     event.setCancelled(true);

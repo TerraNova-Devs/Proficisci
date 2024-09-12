@@ -1,9 +1,11 @@
 package de.mcterranova.proficisci.guis;
 
 import de.mcterranova.proficisci.database.BarrelDatabase;
-import de.mcterranova.proficisci.guiutil.RoseGUI;
-import de.mcterranova.proficisci.guiutil.RoseItem;
-import de.mcterranova.proficisci.utils.Chat;
+
+
+import de.mcterranova.terranovaLib.roseGUI.RoseGUI;
+import de.mcterranova.terranovaLib.roseGUI.RoseItem;
+import de.mcterranova.terranovaLib.utils.Chat;
 import io.th0rgal.oraxen.api.OraxenItems;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;

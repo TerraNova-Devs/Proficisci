@@ -3,7 +3,7 @@ package de.mcterranova.proficisci.listener;
 import de.mcterranova.proficisci.Proficisci;
 import de.mcterranova.proficisci.database.BarrelDatabase;
 import de.mcterranova.proficisci.guis.ShipGUI;
-import de.mcterranova.proficisci.utils.Chat;
+import de.mcterranova.terranovaLib.utils.Chat;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;

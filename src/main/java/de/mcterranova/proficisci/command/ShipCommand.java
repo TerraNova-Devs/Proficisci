@@ -1,7 +1,8 @@
 package de.mcterranova.proficisci.command;
 
 import de.mcterranova.proficisci.services.ShipService;
-import de.mcterranova.proficisci.utils.Chat;
+
+import de.mcterranova.terranovaLib.utils.Chat;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;

@@ -1,10 +1,11 @@
 package de.mcterranova.proficisci.guis;
 
 import de.mcterranova.proficisci.database.BarrelDatabase;
-import de.mcterranova.proficisci.guiutil.RoseGUI;
-import de.mcterranova.proficisci.guiutil.RoseItem;
-import de.mcterranova.proficisci.guiutil.RosePagination;
-import de.mcterranova.proficisci.utils.Chat;
+
+import de.mcterranova.terranovaLib.roseGUI.RoseGUI;
+import de.mcterranova.terranovaLib.roseGUI.RoseItem;
+import de.mcterranova.terranovaLib.roseGUI.RosePagination;
+import de.mcterranova.terranovaLib.utils.Chat;
 import de.terranova.nations.api.SettlementAPI;
 import de.terranova.nations.settlements.AccessLevelEnum;
 import de.terranova.nations.settlements.Settlement;

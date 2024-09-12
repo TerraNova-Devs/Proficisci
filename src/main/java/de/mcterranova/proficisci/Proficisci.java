@@ -3,10 +3,10 @@ package de.mcterranova.proficisci;
 import de.mcterranova.proficisci.command.ShipCommand;
 import de.mcterranova.proficisci.database.HikariCPDatabase;
 import de.mcterranova.proficisci.database.BarrelDatabase;
-import de.mcterranova.proficisci.guiutil.RoseGUIListener;
 import de.mcterranova.proficisci.listener.*;
 import de.mcterranova.proficisci.pl3xmap.Pl3xMapShipRouteLayer;
 import de.mcterranova.proficisci.utils.SilverManager;
+import de.mcterranova.terranovaLib.roseGUI.RoseGUIListener;
 import de.terranova.nations.pl3xmap.Pl3xMapSettlementLayer;
 import net.kyori.adventure.text.TextComponent;
 import net.pl3x.map.core.Pl3xMap;
@@ -32,7 +32,7 @@ public final class Proficisci extends JavaPlugin {
     private HikariCPDatabase hikariCPDatabase;
     private BarrelDatabase barrelDatabase;
     public Map<String, Location> specialBarrelLocations;
-    private Registry<@NotNull Layer> layerRegistry;
+    private Registry<Layer> layerRegistry;
 
     public static Proficisci getInstance() {
         return instance;

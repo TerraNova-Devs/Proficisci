@@ -57,7 +57,7 @@ public class Pl3xMapShipRouteLayer extends WorldLayer {
     }
 
     @Override
-    public @NotNull Collection<@NotNull Marker<?>> getMarkers() {
+    public @NotNull Collection<Marker<?>> getMarkers() {
         return markers;
     }
 }
