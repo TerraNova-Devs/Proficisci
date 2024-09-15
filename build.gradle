@@ -6,6 +6,12 @@ plugins {
 group = 'de.mcterranova.proficisci'
 version = '1.0.0'
 
+def envProperties = new Properties()
+def envPropertiesFile = file('private.env')
+envPropertiesFile.withReader('UTF-8') { reader ->
+    envProperties.load(reader)
+}
+
 repositories {
     mavenCentral()
     maven {
@@ -33,6 +39,14 @@ repositories {
         }
         filter { includeGroup "maven.modrinth" }
     }
+    maven {
+        name = "github"
+        url = "https://maven.pkg.github.com/TerraNova-Devs/TerranovaLib"
+        credentials {
+            username = project.findProperty(envProperties.getProperty('githubUser'))
+            password = project.findProperty(envProperties.getProperty('githubToken'))
+        }
+    }
 }
 
 dependencies {
@@ -43,6 +57,7 @@ dependencies {
     compileOnly 'io.th0rgal:oraxen:1.180.0'
     compileOnly fileTree(dir: 'jars', include: ['*.jar'])
     compileOnly("maven.modrinth:pl3xmap:1.21-500")
+    compileOnly 'de.mcterranova:terranova-lib:0.5.0'
 }
 
 java {

@@ -120,3 +120,6 @@ run/
 #Gerrys schreckliches Antipattern
 !jars/*
 
+# Project exlude file types
+*.env
+
