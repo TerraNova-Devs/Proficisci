@@ -2,7 +2,6 @@ package de.mcterranova.proficisci.database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import de.mcterranova.proficisci.Proficisci;
 
 import java.sql.Connection;
 import java.sql.SQLException;

@@ -6,9 +6,9 @@ import de.mcterranova.terranovaLib.roseGUI.RoseGUI;
 import de.mcterranova.terranovaLib.roseGUI.RoseItem;
 import de.mcterranova.terranovaLib.roseGUI.RosePagination;
 import de.mcterranova.terranovaLib.utils.Chat;
-import de.terranova.nations.api.SettlementAPI;
+import de.terranova.nations.api.SettleAPI;
 import de.terranova.nations.settlements.AccessLevelEnum;
-import de.terranova.nations.settlements.Settlement;
+import de.terranova.nations.settlements.Settle;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -70,7 +70,7 @@ public class ShipGUI extends RoseGUI {
             locations.forEach((regionName, loc) -> {
                 if (loc.distance(player.getLocation()) > DISTANCE)
                     return;
-                Optional<Settlement> settle = SettlementAPI.getSettlement(loc);
+                Optional<Settle> settle = SettleAPI.getSettle(loc);
                 RoseItem locationItem;
                 boolean test = loc.distance(currentLocation) <= 3;
                 locationItem = new RoseItem.Builder()
