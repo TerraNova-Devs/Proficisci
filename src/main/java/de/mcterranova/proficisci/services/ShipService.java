@@ -26,6 +26,22 @@ public class ShipService {
         return locations.get(regionName);
     }
 
+    public Location getNearestShip(Location currentLocation) throws SQLException {
+        Map<String, Location> locations = barrelDatabase.loadTeleportLocations();
+        Location nearestLocation = null;
+        double nearestDistance = Double.MAX_VALUE;
+
+        for (Location location : locations.values()) {
+            double distance = currentLocation.distance(location);
+            if (distance < nearestDistance && !currentLocation.equals(location)) {
+                nearestDistance = distance;
+                nearestLocation = location;
+            }
+        }
+
+        return nearestLocation;
+    }
+
     public void teleportShip(Player player, String regionName) throws SQLException {
         Location loc = getShipLocation(regionName);
         if (loc != null) {

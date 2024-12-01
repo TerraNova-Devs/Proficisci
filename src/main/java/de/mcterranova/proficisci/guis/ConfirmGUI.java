@@ -12,7 +12,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,14 @@ public class ConfirmGUI extends RoseGUI {
                         if (!(chargeStrict(player, OraxenItems.getItemById("terranova_silver").build(), TELEPORT_COST, true) == -1)) {
                             Location safeLocation = getSafeLocation(targetLoc);
                             playTeleportEffects(player.getLocation());
-                            player.teleport(safeLocation);
+                            if (player.isInsideVehicle() && (player.getVehicle() instanceof Horse || player.getVehicle() instanceof Mule || player.getVehicle() instanceof Donkey)) {
+                                Entity mount = player.getVehicle();
+                                mount.teleport(safeLocation);
+                                player.teleport(safeLocation);
+                                mount.addPassenger(player);
+                            } else {
+                                player.teleport(safeLocation);
+                            }
                             playTeleportEffects(safeLocation);
                             player.sendMessage(Chat.greenFade("Du bist in " + regionName + " angekommen."));
                         } else {
