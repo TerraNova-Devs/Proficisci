@@ -7,7 +7,6 @@ import de.mcterranova.proficisci.listener.*;
 import de.mcterranova.proficisci.pl3xmap.Pl3xMapShipRouteLayer;
 import de.mcterranova.proficisci.utils.SilverManager;
 import de.mcterranova.terranovaLib.roseGUI.RoseGUIListener;
-import de.terranova.nations.pl3xmap.Pl3xMapSettlementLayer;
 import net.kyori.adventure.text.TextComponent;
 import net.pl3x.map.core.Pl3xMap;
 import net.pl3x.map.core.markers.layer.Layer;

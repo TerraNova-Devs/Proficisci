@@ -44,7 +44,9 @@ public class PlayerMoveListener implements Listener {
                             try {
                                 if (isNearSpecialBarrelLocation(player.getLocation())) {
                                     //plugin.getInventoryClickListener().openTeleportMenu(player, 1, player.getLocation());
-                                    new ShipGUI(player).open();
+                                    if(player.isOnline()) {
+                                        new ShipGUI(player).open();
+                                    }
                                     countdownTasks.remove(player.getUniqueId());
                                 }
                             } catch (SQLException e) {

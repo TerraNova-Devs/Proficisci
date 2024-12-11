@@ -1,14 +1,13 @@
 package de.mcterranova.proficisci.guis;
 
 import de.mcterranova.proficisci.database.BarrelDatabase;
-
 import de.mcterranova.terranovaLib.roseGUI.RoseGUI;
 import de.mcterranova.terranovaLib.roseGUI.RoseItem;
 import de.mcterranova.terranovaLib.roseGUI.RosePagination;
 import de.mcterranova.terranovaLib.utils.Chat;
-import de.terranova.nations.api.SettleAPI;
-import de.terranova.nations.settlements.AccessLevelEnum;
-import de.terranova.nations.settlements.Settle;
+import de.terranova.nations.regions.RegionManager;
+import de.terranova.nations.regions.access.AccessLevel;
+import de.terranova.nations.regions.grid.SettleRegionType;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -22,8 +21,8 @@ import java.util.Optional;
 
 public class ShipGUI extends RoseGUI {
 
-    private static final int ROWS_PER_PAGE = 5; // 9x4 (excluding border and navigation slots)
     public static final int DISTANCE = 6000;
+    private static final int ROWS_PER_PAGE = 5; // 9x4 (excluding border and navigation slots)
     private final RosePagination pagination = new RosePagination(this);
     private final BarrelDatabase barrelDatabase;
 
@@ -70,13 +69,13 @@ public class ShipGUI extends RoseGUI {
             locations.forEach((regionName, loc) -> {
                 if (loc.distance(player.getLocation()) > DISTANCE)
                     return;
-                Optional<Settle> settle = SettleAPI.getSettle(loc);
+                Optional<SettleRegionType> settle = RegionManager.retrieveRegion("settle", loc);
                 RoseItem locationItem;
                 boolean test = loc.distance(currentLocation) <= 3;
                 locationItem = new RoseItem.Builder()
                         .material(test ? Material.BARRIER : Material.ENDER_PEARL)
                         .displayName(test ? Chat.greenFade("<b>" + regionName.replaceAll("_", " ") + " (Deine Position)") : Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
-                        .addLore(settle.isEmpty() ? "<red>Besitzer: <gray>Server" : "<red>Besitzer: <gray>" + Bukkit.getOfflinePlayer(settle.get().getEveryMemberNameWithCertainAccessLevel(AccessLevelEnum.MAJOR).stream().findFirst().get()).getName(),
+                        .addLore(settle.isEmpty() ? "<red>Besitzer: <gray>Server" : "<red>Besitzer: <gray>" + Bukkit.getOfflinePlayer(settle.get().getAccess().getEveryUUIDWithCertainAccessLevel(AccessLevel.MAJOR).stream().findFirst().get()).getName(),
                                 "<red>Koordinaten: <gray>" + (int) loc.x() + ", " + (int) loc.y() + ", " + (int) loc.z(),
                                 "<red>Distanz: <gray>" + (int) loc.distance(currentLocation) + "m",
                                 "<red>Reisekosten: <gray>1 Silver")
