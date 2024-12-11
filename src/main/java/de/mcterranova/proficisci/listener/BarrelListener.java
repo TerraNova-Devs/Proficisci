@@ -8,6 +8,7 @@ import com.sk89q.worldguard.protection.regions.RegionContainer;
 import de.mcterranova.proficisci.Proficisci;
 import de.mcterranova.proficisci.database.BarrelDatabase;
 
+import de.mcterranova.proficisci.services.ShipService;
 import de.mcterranova.terranovaLib.utils.Chat;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -23,9 +24,11 @@ import java.util.Arrays;
 
 public class BarrelListener implements Listener {
     private final Proficisci plugin;
+    private ShipService shipService;
 
     public BarrelListener(Proficisci plugin) {
         this.plugin = plugin;
+        this.shipService = plugin.shipService;
     }
 
     @EventHandler
@@ -58,6 +61,7 @@ public class BarrelListener implements Listener {
                 if(!barrelDatabase.regionHasBarrel(regionName)) {
                     barrelDatabase.saveBarrelLocation(block.getLocation(), regionName, regionName, event.getPlayer().getUniqueId());
                     player.sendMessage(Chat.greenFade("Schiffsblock erfolgreich platziert."));
+                    shipService.initShipRoutes();
                 } else {
                     player.sendMessage(Chat.errorFade("In dieser Stadt gibt es bereits ein Schiff."));
                     event.setCancelled(true);
@@ -84,6 +88,7 @@ public class BarrelListener implements Listener {
                     player.sendMessage(Chat.greenFade("Schiff entfernt."));
                     block.getWorld().dropItemNaturally(block.getLocation(), plugin.getSpecialBarrelItem());
                     event.setDropItems(false);
+                    shipService.initShipRoutes();
                 } else {
                     event.setCancelled(true);
                 }

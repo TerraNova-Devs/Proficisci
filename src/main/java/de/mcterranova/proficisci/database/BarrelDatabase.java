@@ -159,4 +159,21 @@ public class BarrelDatabase {
             return rs.getInt(1) > 0;
         }
     }
+
+    public String getRegionNameByLocation(Location loc) throws SQLException {
+        String query = "SELECT region_name FROM barrel_locations WHERE world = ? AND x = ? AND y = ? AND z = ?";
+        try (Connection conn = hikariCPDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, loc.getWorld().getName());
+            stmt.setDouble(2, loc.getX());
+            stmt.setDouble(3, loc.getY());
+            stmt.setDouble(4, loc.getZ());
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("region_name");
+            }
+        }
+        return null;
+    }
+
 }

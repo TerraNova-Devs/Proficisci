@@ -5,6 +5,7 @@ import de.mcterranova.proficisci.database.HikariCPDatabase;
 import de.mcterranova.proficisci.database.BarrelDatabase;
 import de.mcterranova.proficisci.listener.*;
 import de.mcterranova.proficisci.pl3xmap.Pl3xMapShipRouteLayer;
+import de.mcterranova.proficisci.services.ShipService;
 import de.mcterranova.proficisci.utils.SilverManager;
 import de.mcterranova.terranovaLib.roseGUI.RoseGUIListener;
 import net.kyori.adventure.text.TextComponent;
@@ -21,7 +22,6 @@ import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import net.kyori.adventure.text.Component;
-import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
 import java.util.*;
@@ -32,6 +32,7 @@ public final class Proficisci extends JavaPlugin {
     private BarrelDatabase barrelDatabase;
     public Map<String, Location> specialBarrelLocations;
     private Registry<Layer> layerRegistry;
+    public ShipService shipService;
 
     public static Proficisci getInstance() {
         return instance;
@@ -45,6 +46,7 @@ public final class Proficisci extends JavaPlugin {
             SilverManager.init();
             hikariCPDatabase = HikariCPDatabase.getInstance();
             barrelDatabase = BarrelDatabase.getInstance();
+            shipService = new ShipService();
 
             getServer().getPluginManager().registerEvents(new BarrelListener(this), this);
             getServer().getPluginManager().registerEvents(new PlayerMoveListener(this), this);

@@ -19,12 +19,10 @@ import java.util.Map;
 
 public class PlayerMoveListener implements Listener {
     private final Proficisci plugin;
-    private final BarrelDatabase barrelDatabase;
     private final Map<UUID, BukkitRunnable> countdownTasks;
 
     public PlayerMoveListener(Proficisci plugin) throws SQLException {
         this.plugin = plugin;
-        this.barrelDatabase = BarrelDatabase.getInstance();
         this.countdownTasks = new HashMap<>();
     }
 

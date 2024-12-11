@@ -6,12 +6,6 @@ plugins {
 group = 'de.mcterranova.proficisci'
 version = '1.0.0'
 
-def envProperties = new Properties()
-def envPropertiesFile = file('private.env')
-envPropertiesFile.withReader('UTF-8') { reader ->
-    envProperties.load(reader)
-}
-
 repositories {
     mavenCentral()
     maven {
@@ -43,8 +37,8 @@ repositories {
         name = "github"
         url = "https://maven.pkg.github.com/TerraNova-Devs/TerranovaLib"
         credentials {
-            username = project.findProperty("githubUser")
-            password = project.findProperty("githubToken")
+            username = project.findProperty("gpr.user")
+            password = project.findProperty("gpr.token")
         }
     }
 }
@@ -80,7 +74,6 @@ processResources {
 }
 
 shadowJar {
-    //relocate 'com.zaxxer.hikari', 'de.mcterranova.proficisci.shaded.hikari'
     destinationDirectory.set(file("./build/libs"))
     archiveClassifier.set('all')
 }
