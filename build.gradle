@@ -74,7 +74,6 @@ processResources {
 }
 
 shadowJar {
-    relocate 'com.zaxxer.hikari', 'de.mcterranova.proficisci.shaded.hikari'
     destinationDirectory.set(file("./build/libs"))
     archiveClassifier.set('all')
 }
