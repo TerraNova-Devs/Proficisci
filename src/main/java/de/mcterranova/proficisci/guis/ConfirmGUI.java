@@ -40,7 +40,7 @@ public class ConfirmGUI extends RoseGUI {
                 .displayName(Component.text("Bestätigen"))
                 .build()
                 .onClick(e -> {
-                    Location targetLoc = locations.get(regionName);
+                    Location targetLoc = locations.get(regionName.toLowerCase());
                     if (targetLoc != null) {
 
                         if (!(chargeStrict(player, OraxenItems.getItemById("terranova_silver").build(), TELEPORT_COST, true) == -1)) {
@@ -48,6 +48,7 @@ public class ConfirmGUI extends RoseGUI {
                             playTeleportEffects(player.getLocation());
                             if (player.isInsideVehicle() && (player.getVehicle() instanceof Horse || player.getVehicle() instanceof Mule || player.getVehicle() instanceof Donkey)) {
                                 Entity mount = player.getVehicle();
+                                mount.eject();
                                 mount.teleport(safeLocation);
                                 player.teleport(safeLocation);
                                 mount.addPassenger(player);

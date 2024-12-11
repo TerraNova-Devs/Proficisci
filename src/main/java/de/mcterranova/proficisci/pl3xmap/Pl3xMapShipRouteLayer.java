@@ -1,7 +1,9 @@
 package de.mcterranova.proficisci.pl3xmap;
 
+import de.mcterranova.proficisci.Proficisci;
 import de.mcterranova.proficisci.database.BarrelDatabase;
 import de.mcterranova.proficisci.guis.ShipGUI;
+import de.mcterranova.proficisci.services.ShipService;
 import net.pl3x.map.core.markers.Point;
 import net.pl3x.map.core.markers.layer.WorldLayer;
 import net.pl3x.map.core.markers.marker.Marker;
@@ -25,6 +27,7 @@ public class Pl3xMapShipRouteLayer extends WorldLayer {
     public Pl3xMapShipRouteLayer(@NotNull World world) throws SQLException {
         super("ship-route-layer", world, () -> "Schiffsrouten");
         BarrelDatabase barrelDatabase = BarrelDatabase.getInstance();
+        ShipService shipService = Proficisci.getInstance().shipService;
 
         setUpdateInterval(0);
         setLiveUpdate(true);
@@ -41,17 +44,17 @@ public class Pl3xMapShipRouteLayer extends WorldLayer {
                 .strokeDashOffset("10")
                 .build();
 
-        for (Location location : locations.values()) {
+        List<String> done = new ArrayList<>();
 
-        }
-
-        locations.forEach((s, location) -> {
-            locations.forEach((s2, location2) -> {
-                if (location.equals(location2) || location.distance(location2) > ShipGUI.DISTANCE) return;
-                if(location.x() <= location2.x()) return;
-                if(location.x() == location2.x()) if (location.y() < location2.y()) return;
-                markers.add(new Polyline(s + s2,new Point((int)location.x(),(int)location.z()),new Point((int)location2.x(),(int)location2.z())).setOptions(optionroutes));
+        shipService.getAllRoutes().forEach((s, d) -> {
+            Location location = locations.get(s);
+            d.forEach((s2) -> {
+                if(!done.contains(s2)) {
+                    Location location2 = locations.get(s2);
+                    markers.add(new Polyline(s + s2, new Point((int) location.x(), (int) location.z()), new Point((int) location2.x(), (int) location2.z())).setOptions(optionroutes));
+                }
             });
+            done.add(s);
         });
 
     }

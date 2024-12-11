@@ -1,14 +1,15 @@
 package de.mcterranova.proficisci.guis;
 
+import de.mcterranova.proficisci.Proficisci;
 import de.mcterranova.proficisci.database.BarrelDatabase;
 import de.mcterranova.proficisci.services.ShipService;
 import de.mcterranova.terranovaLib.roseGUI.RoseGUI;
 import de.mcterranova.terranovaLib.roseGUI.RoseItem;
 import de.mcterranova.terranovaLib.roseGUI.RosePagination;
 import de.mcterranova.terranovaLib.utils.Chat;
-import de.terranova.nations.api.SettleAPI;
-import de.terranova.nations.settlements.AccessLevelEnum;
-import de.terranova.nations.settlements.Settle;
+import de.terranova.nations.regions.RegionManager;
+import de.terranova.nations.regions.access.AccessLevel;
+import de.terranova.nations.regions.grid.SettleRegionType;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -17,24 +18,20 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ShipGUI extends RoseGUI {
 
     private static final int ROWS_PER_PAGE = 5; // 9x4 (excluding border and navigation slots)
-    public static final int DISTANCE = 6000;
     private final RosePagination pagination = new RosePagination(this);
     private final BarrelDatabase barrelDatabase;
-    private final ShipService shipService;
+    private ShipService shipService;
 
     public ShipGUI(@NotNull Player player) throws SQLException {
         super(player, "ship-gui", Chat.blueFade("<b>Reise Möglichkeiten"), ROWS_PER_PAGE);
         this.barrelDatabase = BarrelDatabase.getInstance();
-        this.shipService = new ShipService();
+        this.shipService = Proficisci.getInstance().shipService;
         pagination.registerPageSlotsBetween(10, 16);
         pagination.registerPageSlotsBetween(19, 25);
         pagination.registerPageSlotsBetween(28, 34);
@@ -67,32 +64,23 @@ public class ShipGUI extends RoseGUI {
 
         Location currentLocation = player.getLocation();
         try {
+            if(shipService.getCurrentShip(currentLocation) == null)
+                return;
+
             Map<String, Location> locations = barrelDatabase.loadTeleportLocations().entrySet().stream()
                     .sorted(Comparator.comparingDouble(entry -> entry.getValue().distance(currentLocation)))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-            boolean hasNearbyLocation = false;
+
+            Set<String> possibleShips = shipService.getConnectedShips(shipService.getCurrentShip(currentLocation));
 
             for (Map.Entry<String, Location> entry : locations.entrySet()) {
                 String regionName = capitalize(entry.getKey());
-                Location loc = entry.getValue();
 
-                // Wenn die Distanz größer ist als der Grenzwert, überspringen wir
-                if (loc.distance(player.getLocation()) <= DISTANCE) {
-                    hasNearbyLocation = true;
-                    addTeleportOption(player, loc, regionName, currentLocation);
+                if (possibleShips.contains(entry.getKey()))  {
+                    addTeleportOption(player, entry.getValue(), regionName, currentLocation);
                 }
             }
-
-            // Falls kein Ziel innerhalb der Reichweite gefunden wurde, das nächstgelegene anbieten
-            if (!hasNearbyLocation) {
-                Location nearestLocation = shipService.getNearestShip(player.getLocation());
-                if (nearestLocation != null) {
-                    String regionName = capitalize(barrelDatabase.getRegionNameByLocation(nearestLocation));
-                    addTeleportOption(player, nearestLocation, regionName, currentLocation);
-                } else {
-                    player.sendMessage(Chat.errorFade("Keine anderen Schiffe verfügbar."));
-                }
-            }
+            pagination.update();
         } catch (SQLException e) {
             e.printStackTrace();
             player.sendMessage(Chat.errorFade("An error occurred while loading teleport locations."));
@@ -103,13 +91,13 @@ public class ShipGUI extends RoseGUI {
     }
 
     private void addTeleportOption(Player player, Location loc, String regionName, Location currentLocation) {
-        Optional<Settle> settle = SettleAPI.getSettle(loc);
+        Optional<SettleRegionType> settle = RegionManager.retrieveRegion("settle", loc);
         RoseItem locationItem;
         boolean test = loc.distance(currentLocation) <= 3;
         locationItem = new RoseItem.Builder()
                 .material(test ? Material.BARRIER : Material.ENDER_PEARL)
                 .displayName(test ? Chat.greenFade("<b>" + regionName.replaceAll("_", " ") + " (Deine Position)") : Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
-                .addLore(settle.isEmpty() ? "<red>Besitzer: <gray>Server" : "<red>Besitzer: <gray>" + Bukkit.getOfflinePlayer(settle.get().getEveryMemberNameWithCertainAccessLevel(AccessLevelEnum.MAJOR).stream().findFirst().get()).getName(),
+                .addLore(settle.isEmpty() ? "<red>Besitzer: <gray>Server" : "<red>Besitzer: <gray>" + Bukkit.getOfflinePlayer(settle.get().getAccess().getEveryUUIDWithCertainAccessLevel(AccessLevel.MAJOR).stream().findFirst().get()).getName(),
                         "<red>Koordinaten: <gray>" + (int) loc.getX() + ", " + (int) loc.getY() + ", " + (int) loc.getZ(),
                         "<red>Distanz: <gray>" + (int) loc.distance(currentLocation) + "m",
                         "<red>Reisekosten: <gray>1 Silver")
@@ -128,7 +116,25 @@ public class ShipGUI extends RoseGUI {
         if (str == null || str.isEmpty()) {
             return str;
         }
-        return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
+        StringBuilder sb = new StringBuilder();
+        boolean capitalizeNext = true; // Zu Beginn wird groß geschrieben
+
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (capitalizeNext && Character.isLetter(c)) {
+                sb.append(Character.toUpperCase(c));
+                capitalizeNext = false;
+            } else {
+                sb.append(Character.toLowerCase(c));
+            }
+
+            // Wenn ein Unterstrich gefunden wird, soll das nächste Zeichen groß geschrieben werden
+            if (c == '_') {
+                capitalizeNext = true;
+            }
+        }
+
+        return sb.toString();
     }
 
 }
