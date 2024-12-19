@@ -1,3 +1,7 @@
+# Project exlude data types
+*.env
+*.properties
+
 # User-specific stuff
 .idea/
 
@@ -120,7 +124,5 @@ run/
 #Gerrys schreckliches Antipattern
 !jars/*
 
-# Project exlude data types
-*.env
-*.properties
+
 
