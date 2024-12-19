@@ -52,7 +52,7 @@ public final class Proficisci extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new PlayerMoveListener(this), this);
             getServer().getPluginManager().registerEvents(new RoseGUIListener(),this);
             getServer().getPluginManager().registerEvents(new BarrelClickListener(this), this);
-            getCommand("ship").setExecutor(new ShipCommand());
+            Objects.requireNonNull(getCommand("ship")).setExecutor(new ShipCommand());
             specialBarrelLocations = barrelDatabase.loadTeleportLocations();
         } catch (SQLException e) {
             e.printStackTrace();
