@@ -19,7 +19,7 @@ public class ShipService {
     }
 
     public List<String> listShips() throws SQLException {
-        return barrelDatabase.loadTeleportLocations().keySet().stream().collect(Collectors.toList());
+        return new ArrayList<>(barrelDatabase.loadTeleportLocations().keySet());
     }
 
     public Location getShipLocation(String regionName) throws SQLException {

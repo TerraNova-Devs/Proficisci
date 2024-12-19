@@ -43,6 +43,7 @@ public class BarrelDatabase {
                 locations.put(regionName, loc);
             }
         }
+
         return locations;
     }
 

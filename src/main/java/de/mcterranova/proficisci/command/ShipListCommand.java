@@ -1,6 +1,7 @@
 package de.mcterranova.proficisci.command;
 
 import de.mcterranova.proficisci.services.ShipService;
+import de.mcterranova.terranovaLib.commands.CommandAnnotation;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -9,25 +10,27 @@ import org.bukkit.entity.Player;
 
 import java.sql.SQLException;
 
-public class ShipListCommand implements CommandExecutor {
+public class ShipListCommand {
+
     private final ShipService shipService;
 
     public ShipListCommand(ShipService shipService) {
         this.shipService = shipService;
     }
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Dieser Command darf nur von Spielern genutzt werden.");
-            return true;
-        }
+    @CommandAnnotation(
+            domain = "list",
+            permission = "proficisci.admin",
+            description = "Shows you all the existing ships.",
+            usage = "/ship list"
+    )
+    public boolean onlist(Player p, String[] args) {
 
         try {
-            shipService.listShips().forEach(ship -> player.sendMessage(Component.text("- " + ship)));
+            shipService.listShips().forEach(ship -> p.sendMessage(Component.text("- " + ship)));
         } catch (SQLException e) {
             e.printStackTrace();
-            player.sendMessage(Component.text("An error occurred while listing ships."));
+            p.sendMessage(Component.text("An error occurred while listing ships."));
         }
 
         return true;
