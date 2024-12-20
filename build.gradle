@@ -50,7 +50,7 @@ dependencies {
     implementation 'org.ow2.asm:asm:9.4'
     compileOnly 'io.th0rgal:oraxen:1.180.0'
     compileOnly("maven.modrinth:pl3xmap:1.21-500")
-    compileOnly 'de.mcterranova:terranova-lib:0.8.9'
+    compileOnly 'de.mcterranova:terranova-lib:0.8.10'
     compileOnly fileTree(dir: 'jars', include: ['*.jar'])
 }
 
