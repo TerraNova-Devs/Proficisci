@@ -93,11 +93,10 @@ public class ShipGUI extends RoseGUI {
     private void addTeleportOption(Player player, Location loc, String regionName, Location currentLocation) {
         Optional<SettleRegionType> settle = RegionManager.retrieveRegion("settle", loc);
         RoseItem locationItem;
-        boolean test = loc.distance(currentLocation) <= 3;
-        if(regionName == "spawn"){
+        if(regionName.equalsIgnoreCase("spawn")){
             locationItem = new RoseItem.Builder()
-                    .material(test ? Material.BARRIER : Material.ENDER_PEARL)
-                    .displayName(test ? Chat.greenFade("<b>" + regionName.replaceAll("_", " ") + " (Deine Position)") : Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
+                    .material(Material.ENDER_PEARL)
+                    .displayName(Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
                     .addLore("<red>Besitzer: <gray>Server",
                             "<red>Koordinaten: <gray>" + (int) loc.getX() + ", " + (int) loc.getY() + ", " + (int) loc.getZ(),
                             "<red>Distanz: <gray>" + (int) loc.distance(currentLocation) + "m",
@@ -106,8 +105,8 @@ public class ShipGUI extends RoseGUI {
         } else {
             try {
                 locationItem = new RoseItem.Builder()
-                        .material(test ? Material.BARRIER : Material.ENDER_PEARL)
-                        .displayName(test ? Chat.greenFade("<b>" + regionName.replaceAll("_", " ") + " (Deine Position)") : Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
+                        .material(Material.ENDER_PEARL)
+                        .displayName(Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
                         .addLore("<red>Besitzer: <gray>" + Bukkit.getOfflinePlayer(settle.get().getAccess().getEveryUUIDWithCertainAccessLevel(AccessLevel.MAJOR).stream().findFirst().get()).getName(),
                                 "<red>Koordinaten: <gray>" + (int) loc.getX() + ", " + (int) loc.getY() + ", " + (int) loc.getZ(),
                                 "<red>Distanz: <gray>" + (int) loc.distance(currentLocation) + "m",
@@ -115,8 +114,8 @@ public class ShipGUI extends RoseGUI {
                         .build();
             } catch (NoSuchElementException ex) {
                 locationItem = new RoseItem.Builder()
-                        .material(test ? Material.BARRIER : Material.ENDER_PEARL)
-                        .displayName(test ? Chat.greenFade("<b>" + regionName.replaceAll("_", " ") + " (Deine Position)") : Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
+                        .material(Material.ENDER_PEARL)
+                        .displayName(Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
                         .addLore("<red>Besitzer: <gray>" + "Unbekannt (Fehler mit Stadt)",
                                 "<red>Koordinaten: <gray>" + (int) loc.getX() + ", " + (int) loc.getY() + ", " + (int) loc.getZ(),
                                 "<red>Distanz: <gray>" + (int) loc.distance(currentLocation) + "m",
@@ -126,7 +125,7 @@ public class ShipGUI extends RoseGUI {
 
         }
 
-        if (!test) locationItem.onClick(e -> {
+        locationItem.onClick(e -> {
             try {
                 new ConfirmGUI(player, regionName, loc).open();
             } catch (SQLException ex) {
