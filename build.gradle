@@ -37,8 +37,8 @@ repositories {
         name = "github"
         url = "https://maven.pkg.github.com/TerraNova-Devs/TerranovaLib"
         credentials {
-            username = project.findProperty("gpr.user")
-            password = project.findProperty("gpr.token")
+            username = project.findProperty("githubUser")
+            password = project.findProperty("githubToken")
         }
     }
 }
