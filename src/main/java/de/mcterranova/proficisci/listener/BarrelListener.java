@@ -38,7 +38,7 @@ public class BarrelListener implements Listener {
         Player player = event.getPlayer();
         if (plugin.isSpecialBarrel(itemInHand)) {
             ArrayList<String> allowedBiomes = new ArrayList<>(Arrays.asList("RIVER", "DEEP_COLD_OCEAN", "COLD_OCEAN", "DEEP_LUKEWARM_OCEAN", "LUKEWARM_OCEAN", "OCEAN", "DEEP_OCEAN", "WARM_OCEAN", "DEEP_WARM_OCEAN", "BEACH", "GRAVEL_BEACH", "SNOWY_BEACH"));
-            if (!allowedBiomes.contains(block.getBiome().name())) {
+            if (!allowedBiomes.contains(block.getBiome().toString())) {
                 player.sendMessage(Chat.errorFade("Der Schiffsblock kann nur in Ozean oder Flussbiomen platziert werden."));
                 event.setCancelled(true);
                 return;

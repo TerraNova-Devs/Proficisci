@@ -21,8 +21,8 @@ repositories {
         url = 'https://maven.enginehub.org/repo/'
     }
     maven {
-        name = "Oraxen"
-        url "https://repo.oraxen.com/releases"
+        name = "Nexo"
+        url = "https://repo.nexomc.com/releases"
     }
     exclusiveContent {
         forRepository {
@@ -44,13 +44,13 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
     implementation('com.zaxxer:HikariCP:5.0.1')
-    compileOnly('com.sk89q.worldguard:worldguard-bukkit:7.0.12')
+    compileOnly('com.sk89q.worldguard:worldguard-bukkit:7.0.13')
     implementation 'org.ow2.asm:asm:9.4'
-    compileOnly 'io.th0rgal:oraxen:1.180.0'
-    compileOnly("maven.modrinth:pl3xmap:1.21-500")
-    compileOnly 'de.mcterranova:terranova-lib:0.8.10'
+    compileOnly 'com.nexomc:nexo:1.1.0'
+    compileOnly("maven.modrinth:pl3xmap:1.21.4-522")
+    compileOnly 'de.mcterranova:terranova-lib:1.0.0'
     compileOnly fileTree(dir: 'jars', include: ['*.jar'])
 }
 

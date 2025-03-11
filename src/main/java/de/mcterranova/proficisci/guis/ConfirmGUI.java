@@ -1,12 +1,12 @@
 package de.mcterranova.proficisci.guis;
 
+import com.nexomc.nexo.api.NexoItems;
 import de.mcterranova.proficisci.database.BarrelDatabase;
 
 
 import de.mcterranova.terranovaLib.roseGUI.RoseGUI;
 import de.mcterranova.terranovaLib.roseGUI.RoseItem;
 import de.mcterranova.terranovaLib.utils.Chat;
-import io.th0rgal.oraxen.api.OraxenItems;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -43,7 +43,7 @@ public class ConfirmGUI extends RoseGUI {
                     Location targetLoc = locations.get(regionName.toLowerCase());
                     if (targetLoc != null) {
 
-                        if (!(chargeStrict(player, OraxenItems.getItemById("terranova_silver").build(), TELEPORT_COST, true) == -1)) {
+                        if (!(chargeStrict(player, NexoItems.itemFromId("terranova_silver").build(), TELEPORT_COST, true) == -1)) {
                             Location safeLocation = getSafeLocation(targetLoc);
                             playTeleportEffects(player.getLocation());
                             if (player.isInsideVehicle() && (player.getVehicle() instanceof Horse || player.getVehicle() instanceof Mule || player.getVehicle() instanceof Donkey)) {
