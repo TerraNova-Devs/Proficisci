@@ -21,6 +21,8 @@ public class PlayerMoveListener implements Listener {
     private final Proficisci plugin;
     private final Map<UUID, BukkitRunnable> countdownTasks;
 
+    private final static long COOLDOWN = 100; // in Ticks
+
     public PlayerMoveListener(Proficisci plugin) throws SQLException {
         this.plugin = plugin;
         this.countdownTasks = new HashMap<>();
@@ -35,7 +37,7 @@ public class PlayerMoveListener implements Listener {
         try {
             if (isNearSpecialBarrelLocation(to)) {
                 if (!countdownTasks.containsKey(player.getUniqueId())) {
-                    player.sendMessage(MiniMessage.miniMessage().deserialize("<#839CEB><b>Kapitän:</b> <#83BCEB>Ahoi! Mach es dir gemütlich in 10 Sekunden geht es los."));
+                    player.sendMessage(MiniMessage.miniMessage().deserialize("<#839CEB><b>Kapitän:</b> <#83BCEB>Ahoi! Mach es dir gemütlich in " + COOLDOWN/20 + " Sekunden geht es los."));
                     BukkitRunnable task = new BukkitRunnable() {
                         @Override
                         public void run() {
@@ -52,7 +54,7 @@ public class PlayerMoveListener implements Listener {
                             }
                         }
                     };
-                    task.runTaskLater(plugin, 200L); // 200 ticks = 10 seconds
+                    task.runTaskLater(plugin, COOLDOWN);
                     countdownTasks.put(player.getUniqueId(), task);
                 }
             } else {

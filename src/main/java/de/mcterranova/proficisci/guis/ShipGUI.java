@@ -8,8 +8,8 @@ import de.mcterranova.terranovaLib.roseGUI.RoseItem;
 import de.mcterranova.terranovaLib.roseGUI.RosePagination;
 import de.mcterranova.terranovaLib.utils.Chat;
 import de.terranova.nations.regions.RegionManager;
-import de.terranova.nations.regions.access.TownAccessLevel;
 import de.terranova.nations.regions.grid.SettleRegion;
+import de.terranova.nations.regions.modules.access.AccessLevel;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -107,7 +107,7 @@ public class ShipGUI extends RoseGUI {
                 locationItem = new RoseItem.Builder()
                         .material(Material.ENDER_PEARL)
                         .displayName(Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
-                        .addLore("<red>Besitzer: <gray>" + Bukkit.getOfflinePlayer(settle.get().getAccess().getEveryUUIDWithCertainAccessLevel(TownAccessLevel.MAJOR).stream().findFirst().get()).getName(),
+                        .addLore("<red>Besitzer: <gray>" + Bukkit.getOfflinePlayer(settle.get().getAccess().getEveryUUIDWithCertainAccessLevel(AccessLevel.MAJOR).stream().findFirst().get()).getName(),
                                 "<red>Koordinaten: <gray>" + (int) loc.getX() + ", " + (int) loc.getY() + ", " + (int) loc.getZ(),
                                 "<red>Distanz: <gray>" + (int) loc.distance(currentLocation) + "m",
                                 "<red>Reisekosten: <gray>1 Silver")
