@@ -68,7 +68,7 @@ processResources {
 }
 
 shadowJar {
-    destinationDirectory.set(file("./build/libs"))
+    destinationDirectory.set(file("../Nations/testserver/plugins"))
     archiveClassifier.set('all')
 }
 
