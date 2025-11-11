@@ -9,6 +9,7 @@ import de.mcterranova.proficisci.Proficisci;
 import de.mcterranova.proficisci.database.BarrelDatabase;
 
 import de.mcterranova.proficisci.services.ShipService;
+import de.mcterranova.terranovaLib.utils.BiomeUtil;
 import de.mcterranova.terranovaLib.utils.Chat;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -21,6 +22,7 @@ import org.bukkit.inventory.ItemStack;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class BarrelListener implements Listener {
     private final Proficisci plugin;
@@ -37,8 +39,31 @@ public class BarrelListener implements Listener {
         ItemStack itemInHand = event.getItemInHand();
         Player player = event.getPlayer();
         if (plugin.isSpecialBarrel(itemInHand)) {
-            ArrayList<String> allowedBiomes = new ArrayList<>(Arrays.asList("RIVER", "DEEP_COLD_OCEAN", "COLD_OCEAN", "DEEP_LUKEWARM_OCEAN", "LUKEWARM_OCEAN", "OCEAN", "DEEP_OCEAN", "WARM_OCEAN", "DEEP_WARM_OCEAN", "BEACH", "GRAVEL_BEACH", "SNOWY_BEACH"));
-            if (!allowedBiomes.contains(block.getBiome().toString())) {
+            List<String> biomeTranslationKeys =
+                    List.of(
+                            // Minecraft biomes
+                            "minecraft:deep_ocean",
+                            "minecraft:ocean",
+                            "minecraft:warm_ocean",
+                            "minecraft:frozen_ocean",
+                            "minecraft:lukewarm_ocean",
+                            "minecraft:cold_ocean",
+                            "minecraft:deep_frozen_ocean",
+                            "minecraft:deep_lukewarm_ocean",
+                            "minecraft:deep_cold_ocean",
+                            "minecraft:river",
+                            "minecraft:beach",
+                            "minecraft:snowy_beach",
+                            "minecraft:frozen_river",
+                            // Terralith biomes
+                            "terralith:gravel_beach",
+                            "terralith:snowy_beach",
+                            "terralith:oceanic_plateau",
+                            "terralith:tropical_bay",
+                            "terralith:rocky_coast",
+                            "terralith:white_cliffs",
+                            "terralith:sandstone_valley");
+            if (!BiomeUtil.isBiomeInList(block.getLocation(), biomeTranslationKeys)) {
                 player.sendMessage(Chat.errorFade("Der Schiffsblock kann nur in Ozean oder Flussbiomen platziert werden."));
                 event.setCancelled(true);
                 return;
