@@ -1,7 +1,7 @@
 plugins {
-    id "io.papermc.paperweight.userdev" version "2.0.0-beta.14"
+    id "io.papermc.paperweight.userdev" version "2.0.0-beta.19"
     id 'java'
-    id "io.github.goooler.shadow" version "8.1.8"
+    id "com.gradleup.shadow" version "9.0.0"
 }
 
 group = 'de.mcterranova.proficisci'
@@ -37,20 +37,19 @@ repositories {
 }
 
 dependencies {
-    paperweightDevelopmentBundle("io.papermc.paper:dev-bundle:1.21.1-R0.1-SNAPSHOT")
-    implementation('com.zaxxer:HikariCP:5.0.1')
-    compileOnly('com.sk89q.worldguard:worldguard-bukkit:7.0.13')
-    implementation 'org.ow2.asm:asm:9.4'
-    compileOnly 'com.nexomc:nexo:1.1.0'
-    compileOnly("maven.modrinth:pl3xmap:1.21.4-522")
-    compileOnly 'de.mcterranova:terranova-lib:1.0.0'
+    paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
+    implementation('com.zaxxer:HikariCP:7.0.2')
+    compileOnly('com.sk89q.worldguard:worldguard-bukkit:7.0.16')
+    compileOnly 'com.nexomc:nexo:1.21.0'
+    compileOnly("maven.modrinth:pl3xmap:1.21.11-544")
+    compileOnly 'de.mcterranova:terranova-lib:1.0.1'
     compileOnly 'de.terranova:nations:1.0.0-SNAPSHOT'
     compileOnly fileTree(dir: 'jars', include: ['*.jar'])
 }
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
 
