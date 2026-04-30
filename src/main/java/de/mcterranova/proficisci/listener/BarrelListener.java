@@ -63,7 +63,8 @@ public class BarrelListener implements Listener {
                             "terralith:rocky_coast",
                             "terralith:white_cliffs",
                             "terralith:sandstone_valley");
-            if (!BiomeUtil.isBiomeInList(block.getLocation(), biomeTranslationKeys)) {
+
+            if (BiomeUtil.isBiomeInList(block.getLocation(), biomeTranslationKeys)) {
                 player.sendMessage(Chat.errorFade("Der Schiffsblock kann nur in Ozean oder Flussbiomen platziert werden."));
                 event.setCancelled(true);
                 return;
