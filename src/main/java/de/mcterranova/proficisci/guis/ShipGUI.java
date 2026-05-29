@@ -91,7 +91,7 @@ public class ShipGUI extends RoseGUI {
     }
 
     private void addTeleportOption(Player player, Location loc, String regionName, Location currentLocation) {
-        Optional<SettleRegion> settle = RegionManager.retrieveRegion("settle", loc);
+        Optional<SettleRegion> settle = RegionManager.retrieveRegion(SettleRegion.class, loc);
         RoseItem locationItem;
         if(regionName.equalsIgnoreCase("spawn")){
             locationItem = new RoseItem.Builder()
