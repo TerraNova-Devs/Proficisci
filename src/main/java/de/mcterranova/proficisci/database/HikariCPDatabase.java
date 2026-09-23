@@ -2,6 +2,8 @@ package de.mcterranova.proficisci.database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import de.mcterranova.proficisci.Proficisci;
+import org.bukkit.configuration.file.FileConfiguration;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -10,11 +12,18 @@ public class HikariCPDatabase {
     private static HikariCPDatabase instance;
     private HikariDataSource dataSource;
 
-    private HikariCPDatabase() throws SQLException {
+    private HikariCPDatabase(Proficisci plugin) throws SQLException {
+        FileConfiguration pluginConfig = plugin.getConfig();
+        String host = pluginConfig.getString("database.host", "localhost");
+        int port = pluginConfig.getInt("database.port", 3306);
+        String database = pluginConfig.getString("database.database", "network");
+        String username = pluginConfig.getString("database.username", "minecraft");
+        String password = pluginConfig.getString("database.password", "minecraft");
+
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:mysql://localhost:3306/network");
-        config.setUsername("minecraft");
-        config.setPassword("minecraft");
+        config.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + database);
+        config.setUsername(username);
+        config.setPassword(password);
         config.setMaximumPoolSize(10);
         config.setMinimumIdle(2);
         config.setConnectionTimeout(30000);
@@ -26,7 +35,14 @@ public class HikariCPDatabase {
 
     public static synchronized HikariCPDatabase getInstance() throws SQLException {
         if (instance == null) {
-            instance = new HikariCPDatabase();
+            instance = new HikariCPDatabase(Proficisci.getInstance());
+        }
+        return instance;
+    }
+
+    public static synchronized HikariCPDatabase getInstance(Proficisci plugin) throws SQLException {
+        if (instance == null) {
+            instance = new HikariCPDatabase(plugin);
         }
         return instance;
     }

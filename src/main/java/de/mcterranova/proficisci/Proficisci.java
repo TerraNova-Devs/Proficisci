@@ -1,12 +1,14 @@
 package de.mcterranova.proficisci;
 
 import de.mcterranova.proficisci.command.ShipCommand;
+import de.mcterranova.proficisci.command.WaterMapCommand;
 import de.mcterranova.proficisci.database.HikariCPDatabase;
 import de.mcterranova.proficisci.database.BarrelDatabase;
 import de.mcterranova.proficisci.listener.*;
 import de.mcterranova.proficisci.pl3xmap.Pl3xMapShipRouteLayer;
 import de.mcterranova.proficisci.services.ShipService;
 import de.mcterranova.proficisci.utils.SilverManager;
+import de.mcterranova.proficisci.watermap.WaterMapService;
 import de.mcterranova.terranovaLib.roseGUI.RoseGUIListener;
 import net.kyori.adventure.text.TextComponent;
 import net.pl3x.map.core.Pl3xMap;
@@ -23,6 +25,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import net.kyori.adventure.text.Component;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -33,6 +36,7 @@ public final class Proficisci extends JavaPlugin {
     public Map<String, Location> specialBarrelLocations;
     private Registry<Layer> layerRegistry;
     public ShipService shipService;
+    public WaterMapService waterMapService;
 
     public static Proficisci getInstance() {
         return instance;
@@ -41,19 +45,23 @@ public final class Proficisci extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+        saveDefaultConfig();
 
         try {
             SilverManager.init();
-            hikariCPDatabase = HikariCPDatabase.getInstance();
+            hikariCPDatabase = HikariCPDatabase.getInstance(this);
             barrelDatabase = BarrelDatabase.getInstance();
             shipService = new ShipService();
+            waterMapService = new WaterMapService(this);
+            waterMapService.initialize();
 
             getServer().getPluginManager().registerEvents(new BarrelListener(this), this);
             getServer().getPluginManager().registerEvents(new PlayerMoveListener(this), this);
             getServer().getPluginManager().registerEvents(new BarrelClickListener(this), this);
             Objects.requireNonNull(getCommand("ship")).setExecutor(new ShipCommand());
+            Objects.requireNonNull(getCommand("watermap")).setExecutor(new WaterMapCommand());
             specialBarrelLocations = barrelDatabase.loadTeleportLocations();
-        } catch (SQLException e) {
+        } catch (SQLException | IOException e) {
             e.printStackTrace();
             getServer().getPluginManager().disablePlugin(this);
             return;
@@ -73,6 +81,9 @@ public final class Proficisci extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (waterMapService != null) {
+            waterMapService.shutdown();
+        }
         if (hikariCPDatabase != null) {
             hikariCPDatabase.closeConnection();
         }

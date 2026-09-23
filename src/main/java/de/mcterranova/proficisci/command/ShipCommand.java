@@ -17,6 +17,7 @@ public class ShipCommand extends AbstractCommand {
         registerSubCommand(new ShipTeleportCommand(shipService), "tp");
         registerSubCommand(new ShipNameCommand(shipService), "name");
         registerSubCommand(new ShipViewCommand(shipService), "view");
+        registerSubCommand(new ShipWaterMapCommand(), "watermap");
         setupHelpCommand();
         initialize();
     }
