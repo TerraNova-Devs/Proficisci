@@ -10,7 +10,6 @@ version = '1.0.0'
 ext {
     minecraftVersion = '26.3'
     nexoVersion = '1.27.0'
-    pl3xMapVersion = '26.2-553'
     worldGuardVersion = '7.0.18'
 }
 
@@ -51,7 +50,6 @@ dependencies {
         exclude(group: "com.google.guava", module: "guava")
     }
     compileOnly("com.nexomc:nexo:${nexoVersion}")
-    compileOnly("maven.modrinth:pl3xmap:${pl3xMapVersion}")
     compileOnly 'de.mcterranova:terranova-lib:1.0.1'
     compileOnly 'de.terranova:nations:1.0.0-SNAPSHOT'
     compileOnly fileTree(dir: 'jars', include: ['*.jar'])

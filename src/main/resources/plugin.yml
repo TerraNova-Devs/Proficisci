@@ -18,4 +18,3 @@ commands:
     permission: proficisci.admin
     permission-message: You do not have permission to use this command.
 depend: [Nexo, Nations, TerranovaLib]
-softdepend: [Pl3xMap]
