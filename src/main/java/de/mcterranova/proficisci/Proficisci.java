@@ -4,6 +4,7 @@ import de.mcterranova.proficisci.command.ShipCommand;
 import de.mcterranova.proficisci.command.WaterMapCommand;
 import de.mcterranova.proficisci.database.HikariCPDatabase;
 import de.mcterranova.proficisci.database.BarrelDatabase;
+import de.mcterranova.proficisci.heroicmap.ShipMap;
 import de.mcterranova.proficisci.listener.*;
 import de.mcterranova.proficisci.services.ShipService;
 import de.mcterranova.proficisci.utils.SilverManager;
@@ -64,6 +65,14 @@ public final class Proficisci extends JavaPlugin {
 
         Bukkit.addRecipe(getSpecialBarrelRecipe());
 
+        // ShipMap names the API of HeroicMap; without HeroicMap only the ship routes are missing on the map.
+        if (getServer().getPluginManager().isPluginEnabled("HeroicMap")) {
+            try {
+                ShipMap.start(this);
+            } catch (LinkageError | RuntimeException e) {
+                getLogger().warning("HeroicMap: Schiffsrouten nicht auf der Karte: " + e);
+            }
+        }
     }
 
     @Override
