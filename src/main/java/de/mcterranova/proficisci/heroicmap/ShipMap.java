@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * The ship button in the panel of every town of Nations with a harbour, and for each player the ship routes between
@@ -45,6 +47,12 @@ public final class ShipMap implements Listener {
     private Map<String, UUID> towns = Map.of();
     // player -> the lines they have on the layer
     private final Map<UUID, Map<String, MapObject>> shown = new HashMap<>();
+    // writes of the button states, off the main thread and in click order; a daemon, so it never holds up the stop
+    private final ExecutorService writes = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "Proficisci-Schiffsknopf");
+        t.setDaemon(true);
+        return t;
+    });
 
     private ShipMap(Proficisci plugin, Layer layer, MapButton button, Map<UUID, Set<UUID>> on) {
         this.plugin = plugin;
@@ -82,12 +90,13 @@ public final class ShipMap implements Listener {
         button.state(player, e.layer(), e.object(), now);
         Set<UUID> mine = on.computeIfAbsent(player, p -> new HashSet<>());
         if (now) mine.add(town); else mine.remove(town);
-        // ponytail: written on the main thread, in click order; a click is rare and the database local
-        try {
-            BarrelDatabase.getInstance().setRouteButton(player, town, now);
-        } catch (SQLException ex) {
-            plugin.getLogger().warning("Schiffsknopf von " + player + " nicht gespeichert: " + ex);
-        }
+        writes.execute(() -> {
+            try {
+                BarrelDatabase.getInstance().setRouteButton(player, town, now);
+            } catch (SQLException ex) {
+                plugin.getLogger().warning("Schiffsknopf von " + player + " nicht gespeichert: " + ex);
+            }
+        });
         sync(player);
     }
 
