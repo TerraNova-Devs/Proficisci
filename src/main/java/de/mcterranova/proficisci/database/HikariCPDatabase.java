@@ -64,6 +64,13 @@ public class HikariCPDatabase {
                             "owner VARCHAR(36), " +
                             "PRIMARY KEY (region_name, world, x, y, z))"
             );
+            // a row: the player switched the ship button of this town of Nations on, see ShipMap
+            connection.createStatement().executeUpdate(
+                    "CREATE TABLE IF NOT EXISTS ship_route_buttons (" +
+                            "player CHAR(36), " +
+                            "town CHAR(36), " +
+                            "PRIMARY KEY (player, town))"
+            );
         }
     }
 
