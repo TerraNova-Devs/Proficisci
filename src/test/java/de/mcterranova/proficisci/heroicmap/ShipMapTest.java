@@ -29,14 +29,19 @@ class ShipMapTest {
         return routes;
     }
 
-    /** Blocks between harbours from their x and z, each harbour as "name x z". */
+    /**
+     * Blocks between harbours from their x and z, each harbour as "name x z"; as in ShipMap.sync, infinite for a
+     * harbour without a location.
+     */
     private static ToDoubleBiFunction<String, String> at(String... harbours) {
         Map<String, double[]> xz = new HashMap<>();
         for (String h : harbours) {
             String[] p = h.split(" ");
             xz.put(p[0], new double[] {Double.parseDouble(p[1]), Double.parseDouble(p[2])});
         }
-        return (a, b) -> Math.hypot(xz.get(a)[0] - xz.get(b)[0], xz.get(a)[1] - xz.get(b)[1]);
+        return (a, b) -> !xz.containsKey(a) || !xz.containsKey(b)
+                ? Double.POSITIVE_INFINITY
+                : Math.hypot(xz.get(a)[0] - xz.get(b)[0], xz.get(a)[1] - xz.get(b)[1]);
     }
 
     private static final ToDoubleBiFunction<String, String> FLAT = (a, b) -> 1000;
@@ -93,6 +98,18 @@ class ShipMapTest {
         Map<String, Set<String>> routes = routes("a-x", "b-y");
         Map<String, UUID> towns = Map.of("a", A, "b", B);
         assertEquals(Set.of(), ShipMap.segments(routes, FLAT, towns, Set.of(A, B)));
+    }
+
+    @Test
+    void harbourWithoutLocationIsNoWay() {
+        Map<String, Set<String>> routes = routes("a-x", "x-b");
+        Map<String, UUID> towns = Map.of("a", A, "b", B);
+        // x has no location: no way over it, and nothing throws
+        assertEquals(Set.of(), ShipMap.segments(routes, at("a 0 0", "b 8000 0"), towns, Set.of(A, B)));
+        // counter-check: with its location the way over x is there
+        assertEquals(
+                Set.of(List.of("a", "x"), List.of("b", "x")),
+                ShipMap.segments(routes, at("a 0 0", "b 8000 0", "x 4000 0"), towns, Set.of(A, B)));
     }
 
     @Test

@@ -135,7 +135,14 @@ public final class ShipMap implements Listener {
     private void sync(UUID player) {
         Map<String, Location> ships = plugin.specialBarrelLocations;
         Map<String, MapObject> next = new HashMap<>();
-        ToDoubleBiFunction<String, String> blocks = (a, b) -> ships.get(a).distance(ships.get(b));
+        // no way between harbours without a location or in different worlds; the search leaves such routes out
+        ToDoubleBiFunction<String, String> blocks = (a, b) -> {
+            Location from = ships.get(a);
+            Location to = ships.get(b);
+            return from == null || to == null || from.getWorld() == null || !from.getWorld().equals(to.getWorld())
+                    ? Double.POSITIVE_INFINITY
+                    : from.distance(to);
+        };
         for (List<String> pair : segments(plugin.shipService.getAllRoutes(), blocks, towns, on.getOrDefault(player, Set.of()))) {
             Location from = ships.get(pair.get(0));
             Location to = ships.get(pair.get(1));
@@ -160,7 +167,8 @@ public final class ShipMap implements Listener {
      * The legs to draw: for every two harbours in towns of {@code mine}, the fastest way between them through the
      * routes, over any harbour, also one outside a town; between two harbours of one town only a direct route, as
      * before. Fastest is the fewest trips, each a teleport for one silver; among those the shortest in blocks. Each leg
-     * once, as its two harbours, the smaller name first. Routes go both ways, as ShipService stores them.
+     * once, as its two harbours, the smaller name first. Routes go both ways, as ShipService stores them; a route
+     * whose {@code blocks} are not finite is no way.
      */
     static Set<List<String>> segments(Map<String, Set<String>> routes, ToDoubleBiFunction<String, String> blocks,
                                       Map<String, UUID> towns, Set<UUID> mine) {
@@ -199,7 +207,9 @@ public final class ShipMap implements Listener {
             for (String at : layer) { // sorted, so on a tie the first by name stays
                 for (String to : routes.getOrDefault(at, Set.of())) {
                     if (way.containsKey(to)) continue; // reached with fewer trips
-                    double w = way.get(at) + blocks.applyAsDouble(at, to);
+                    double step = blocks.applyAsDouble(at, to);
+                    if (!Double.isFinite(step)) continue; // no way, see blocks
+                    double w = way.get(at) + step;
                     Double best = next.get(to);
                     if (best == null || w < best) {
                         next.put(to, w);
