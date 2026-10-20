@@ -8,7 +8,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class BarrelDatabase {
@@ -132,6 +134,32 @@ public class BarrelDatabase {
             }
         }
         return null;
+    }
+
+    /** Player -> the towns where they switched the ship button on. */
+    public Map<UUID, Set<UUID>> loadRouteButtons() throws SQLException {
+        Map<UUID, Set<UUID>> on = new HashMap<>();
+        try (Connection conn = hikariCPDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT player, town FROM ship_route_buttons");
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                on.computeIfAbsent(UUID.fromString(rs.getString("player")), p -> new HashSet<>())
+                        .add(UUID.fromString(rs.getString("town")));
+            }
+        }
+        return on;
+    }
+
+    public void setRouteButton(UUID player, UUID town, boolean on) throws SQLException {
+        String sql = on
+                ? "INSERT IGNORE INTO ship_route_buttons (player, town) VALUES (?, ?)"
+                : "DELETE FROM ship_route_buttons WHERE player = ? AND town = ?";
+        try (Connection conn = hikariCPDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, player.toString());
+            stmt.setString(2, town.toString());
+            stmt.executeUpdate();
+        }
     }
 
     public boolean regionHasBarrel(String regionName) throws SQLException {

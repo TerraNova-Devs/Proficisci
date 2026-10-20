@@ -65,11 +65,11 @@ public final class Proficisci extends JavaPlugin {
 
         Bukkit.addRecipe(getSpecialBarrelRecipe());
 
-        // ShipMap names the API of HeroicMap; without HeroicMap only the ship routes are missing on the map.
+        // ShipMap names the API of HeroicMap; without HeroicMap only ship button and routes are missing on the map.
         if (getServer().getPluginManager().isPluginEnabled("HeroicMap")) {
             try {
                 ShipMap.start(this);
-            } catch (LinkageError | RuntimeException e) {
+            } catch (LinkageError | RuntimeException | SQLException e) {
                 getLogger().warning("HeroicMap: Schiffsrouten nicht auf der Karte: " + e);
             }
         }
