@@ -17,4 +17,9 @@ commands:
     usage: /watermap
     permission: proficisci.admin
     permission-message: You do not have permission to use this command.
-depend: [Nexo, Nations, TerranovaLib]
+depend: [Nexo, Nations, TerranovaLib, WorldGuard]
+softdepend: [HeroicMap]
+permissions:
+  proficisci.admin:
+    description: Ship commands, and placing and breaking every ship block regardless of town and rank.
+    default: op

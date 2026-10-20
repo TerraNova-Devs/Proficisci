@@ -134,22 +134,6 @@ public class BarrelDatabase {
         return null;
     }
 
-    public UUID getShipOwner(Location loc) throws SQLException {
-        String query = "SELECT owner FROM barrel_locations WHERE world = ? AND x = ? AND y = ? AND z = ?";
-        try (Connection conn = hikariCPDatabase.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setString(1, loc.getWorld().getName());
-            stmt.setDouble(2, loc.getX());
-            stmt.setDouble(3, loc.getY());
-            stmt.setDouble(4, loc.getZ());
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return UUID.fromString(rs.getString("owner"));
-            }
-        }
-        return null;
-    }
-
     public boolean regionHasBarrel(String regionName) throws SQLException {
         String query = "SELECT COUNT(*) FROM barrel_locations WHERE region_name = ?";
         try (Connection conn = hikariCPDatabase.getConnection();

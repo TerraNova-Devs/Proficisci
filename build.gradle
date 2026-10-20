@@ -34,16 +34,16 @@ repositories {
     exclusiveContent {
         forRepository {
             maven {
-                name = "Pl3xMap"
-                url = "https://api.modrinth.com/maven"
+                name = "JitPack"
+                url = "https://jitpack.io"
             }
         }
-        filter { includeGroup "maven.modrinth" }
+        filter { includeGroup "com.github.VonNekyia" }
     }
 }
 
 dependencies {
-    paperweight.paperDevBundle("${minecraftVersion}.build.+")
+    paperweight.paperDevBundle("${minecraftVersion}.build.205-stable")
     implementation('com.zaxxer:HikariCP:7.0.2')
     compileOnly("com.sk89q.worldguard:worldguard-bukkit:${worldGuardVersion}") {
         exclude(group: "com.google.code.gson", module: "gson")
@@ -52,6 +52,8 @@ dependencies {
     compileOnly("com.nexomc:nexo:${nexoVersion}")
     compileOnly 'de.mcterranova:terranova-lib:1.0.1'
     compileOnly 'de.terranova:nations:1.0.0-SNAPSHOT'
+    // HeroicMap-API über JitPack, nur zum Übersetzen; das Jar von HeroicMap bringt die Klassen mit.
+    compileOnly 'com.github.VonNekyia:heroic-map-renderer-plugin:v0.10.0'
     compileOnly fileTree(dir: 'jars', include: ['*.jar'])
 }
 
