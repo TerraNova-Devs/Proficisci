@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -179,7 +180,8 @@ public final class WaterMapStorage {
 
     private void writeMetaFile(long regionCount) throws IOException {
         Files.createDirectories(root);
-        String json = """
+        // Locale.ROOT: with the locale of the system, as German, waterHeight came out as 62,5 and broke the JSON
+        String json = String.format(Locale.ROOT, """
                 {
                   "schema": 3,
                   "chunkSize": %d,
@@ -213,7 +215,7 @@ public final class WaterMapStorage {
                   "regionCount": %d,
                   "updatedAt": "%s"
                 }
-                """.formatted(
+                """,
                 WaterMapConstants.CHUNK_SIZE,
                 WaterMapConstants.REGION_CHUNKS,
                 WaterMapConstants.REGION_SIZE,
