@@ -71,6 +71,13 @@ public class HikariCPDatabase {
                             "town CHAR(36), " +
                             "PRIMARY KEY (player, town))"
             );
+            // free trips of a player, valid until expires (epoch millis), the next 4:00 when they were given
+            connection.createStatement().executeUpdate(
+                    "CREATE TABLE IF NOT EXISTS free_trips (" +
+                            "player CHAR(36) PRIMARY KEY, " +
+                            "trips INT NOT NULL, " +
+                            "expires BIGINT NOT NULL)"
+            );
         }
     }
 

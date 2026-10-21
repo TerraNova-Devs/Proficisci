@@ -42,7 +42,8 @@ public class ConfirmGUI extends RoseGUI {
                     Location targetLoc = locations.get(regionName.toLowerCase());
                     if (targetLoc != null) {
 
-                        if (ItemTransfer.charge(player, "terranova_silver", TELEPORT_COST, true) != -1) {
+                        boolean free = useFreeTrip();
+                        if (free || ItemTransfer.charge(player, "terranova_silver", TELEPORT_COST, true) != -1) {
                             Location safeLocation = getSafeLocation(targetLoc);
                             playTeleportEffects(player.getLocation());
                             if (player.isInsideVehicle() && (player.getVehicle() instanceof Horse || player.getVehicle() instanceof Mule || player.getVehicle() instanceof Donkey)) {
@@ -56,6 +57,9 @@ public class ConfirmGUI extends RoseGUI {
                             }
                             playTeleportEffects(safeLocation);
                             player.sendMessage(Chat.greenFade("Du bist in " + regionName + " angekommen."));
+                            if (free) {
+                                player.sendMessage(Chat.greenFade("Die Reise war eine Freifahrt."));
+                            }
                         } else {
                             player.sendMessage(Component.text("Du brauchst mindestens " + TELEPORT_COST + " Silber für die Reise."));
                         }
@@ -72,6 +76,16 @@ public class ConfirmGUI extends RoseGUI {
                 });
         addItem(3, confirm);
         addItem(5, cancel);
+    }
+
+    /** Uses up a free trip if the player has one; on a database error the trip costs silver as before. */
+    private boolean useFreeTrip() {
+        try {
+            return barrelDatabase.useFreeTrip(player.getUniqueId(), System.currentTimeMillis());
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     private void playTeleportEffects(Location location) {

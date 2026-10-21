@@ -15,6 +15,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
@@ -44,6 +45,21 @@ public class ShipGUI extends RoseGUI {
                 .displayName("")
                 .build();
         fillGui(filler);
+
+        // the free trips as a note at the top in the middle, as many sheets as trips; none without
+        int freeTrips = 0;
+        try {
+            freeTrips = barrelDatabase.freeTrips(player.getUniqueId(), System.currentTimeMillis());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        if (freeTrips > 0) {
+            addItem(4, new RoseItem.Builder()
+                    .copyStack(new ItemStack(Material.PAPER, Math.min(freeTrips, 64)))
+                    .displayName(Chat.stringToComponent("<!i><white><b>Freifahrten"))
+                    .addLore("<gray>Übrig: <white>" + freeTrips, "<gray>Gültig bis 4 Uhr")
+                    .build());
+        }
 
         RoseItem next = new RoseItem.Builder()
                 .material(Material.SPECTRAL_ARROW)

@@ -162,6 +162,47 @@ public class BarrelDatabase {
         }
     }
 
+    /**
+     * Adds free trips valid until {@code expires}; trips that ran out before {@code now} are not added to.
+     * The update reads expires before it sets it, so the old value decides.
+     */
+    public void giveFreeTrips(UUID player, int trips, long now, long expires) throws SQLException {
+        String sql = "INSERT INTO free_trips (player, trips, expires) VALUES (?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE trips = IF(expires > ?, trips + VALUES(trips), VALUES(trips)), " +
+                "expires = VALUES(expires)";
+        try (Connection conn = hikariCPDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, player.toString());
+            stmt.setInt(2, trips);
+            stmt.setLong(3, expires);
+            stmt.setLong(4, now);
+            stmt.executeUpdate();
+        }
+    }
+
+    /** Uses up one free trip if the player has one left at {@code now}; in one statement, so never twice. */
+    public boolean useFreeTrip(UUID player, long now) throws SQLException {
+        String sql = "UPDATE free_trips SET trips = trips - 1 WHERE player = ? AND trips > 0 AND expires > ?";
+        try (Connection conn = hikariCPDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, player.toString());
+            stmt.setLong(2, now);
+            return stmt.executeUpdate() == 1;
+        }
+    }
+
+    /** The free trips the player has left at {@code now}. */
+    public int freeTrips(UUID player, long now) throws SQLException {
+        String sql = "SELECT trips FROM free_trips WHERE player = ? AND expires > ?";
+        try (Connection conn = hikariCPDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, player.toString());
+            stmt.setLong(2, now);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next() ? rs.getInt("trips") : 0;
+        }
+    }
+
     public boolean regionHasBarrel(String regionName) throws SQLException {
         String query = "SELECT COUNT(*) FROM barrel_locations WHERE region_name = ?";
         try (Connection conn = hikariCPDatabase.getConnection();
