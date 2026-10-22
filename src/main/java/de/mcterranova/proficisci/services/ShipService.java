@@ -7,7 +7,6 @@ import org.bukkit.entity.Player;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -142,16 +141,15 @@ public class ShipService {
         return barrelDatabase.getShipOwner(regionName);
     }
 
-    /** Free trips run out at 4:00 German time, whatever the zone of the server. */
+    /** Free trips run out at midnight German time, with the reset of the votes, whatever the zone of the server. */
     private static final ZoneId FREE_TRIP_ZONE = ZoneId.of("Europe/Berlin");
 
-    /** The next 4:00 in Germany after {@code now}. */
+    /** The next midnight in Germany after {@code now}. */
     public static Instant nextFreeTripExpiry(Instant now) {
-        ZonedDateTime four = now.atZone(FREE_TRIP_ZONE).toLocalDate().atTime(4, 0).atZone(FREE_TRIP_ZONE);
-        return (four.toInstant().isAfter(now) ? four : four.plusDays(1)).toInstant();
+        return now.atZone(FREE_TRIP_ZONE).toLocalDate().plusDays(1).atStartOfDay(FREE_TRIP_ZONE).toInstant();
     }
 
-    /** Gives free trips until the next 4:00 and returns how many the player has now. */
+    /** Gives free trips until the next midnight and returns how many the player has now. */
     public int giveFreeTrips(UUID player, int trips) throws SQLException {
         Instant now = Instant.now();
         barrelDatabase.giveFreeTrips(player, trips, now.toEpochMilli(), nextFreeTripExpiry(now).toEpochMilli());

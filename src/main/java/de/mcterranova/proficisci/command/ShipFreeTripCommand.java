@@ -19,7 +19,7 @@ public class ShipFreeTripCommand {
     @CommandAnnotation(
             domain = "freifahrt.$ONLINEPLAYERS.$<anzahl>",
             permission = "proficisci.admin",
-            description = "Gives a player free trips until 4:00.",
+            description = "Gives a player free trips until midnight.",
             usage = "/ship freifahrt <player> <anzahl>"
     )
     public boolean onCommand(Player p, String[] args) {
@@ -41,10 +41,10 @@ public class ShipFreeTripCommand {
 
         try {
             int total = shipService.giveFreeTrips(target.getUniqueId(), trips);
-            p.sendMessage(Chat.greenFade(target.getName() + " hat jetzt " + total + " Freifahrten bis 4 Uhr."));
+            p.sendMessage(Chat.greenFade(target.getName() + " hat jetzt " + total + " Freifahrten bis Mitternacht."));
             Player online = target.getPlayer();
             if (online != null) {
-                online.sendMessage(Chat.greenFade("Du hast " + trips + " Freifahrten bekommen, sie gelten bis 4 Uhr."));
+                online.sendMessage(Chat.greenFade("Du hast " + trips + " Freifahrten bekommen, sie gelten bis Mitternacht."));
             }
         } catch (SQLException e) {
             e.printStackTrace();

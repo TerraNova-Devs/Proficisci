@@ -57,7 +57,7 @@ public class ShipGUI extends RoseGUI {
             addItem(4, new RoseItem.Builder()
                     .copyStack(new ItemStack(Material.PAPER, Math.min(freeTrips, 64)))
                     .displayName(Chat.stringToComponent("<!i><white><b>Freifahrten"))
-                    .addLore("<gray>Übrig: <white>" + freeTrips, "<gray>Gültig bis 4 Uhr")
+                    .addLore("<gray>Übrig: <white>" + freeTrips, "<gray>Gültig bis Mitternacht")
                     .build());
         }
 

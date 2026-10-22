@@ -12,14 +12,16 @@ class ShipServiceTest {
     }
 
     @Test
-    void freeTripsRunOutAtTheNextFourOClockInGermany() {
-        // summer time, 4:00 in Germany is 02:00 UTC
-        assertEquals(Instant.parse("2026-10-21T02:00:00Z"), next("2026-10-21T01:59:00Z")); // 3:59
-        assertEquals(Instant.parse("2026-10-22T02:00:00Z"), next("2026-10-21T02:00:00Z")); // 4:00 sharp
-        assertEquals(Instant.parse("2026-10-22T02:00:00Z"), next("2026-10-21T21:00:00Z")); // 23:00
-        // the night summer time ends, 4:00 is then 03:00 UTC
-        assertEquals(Instant.parse("2026-10-25T03:00:00Z"), next("2026-10-24T20:00:00Z"));
-        // the night summer time begins, 4:00 is then 02:00 UTC
-        assertEquals(Instant.parse("2027-03-28T02:00:00Z"), next("2027-03-27T21:00:00Z"));
+    void freeTripsRunOutAtTheNextMidnightInGermany() {
+        // summer time, midnight in Germany is 22:00 UTC the day before
+        assertEquals(Instant.parse("2026-10-21T22:00:00Z"), next("2026-10-21T21:59:00Z")); // 23:59
+        assertEquals(Instant.parse("2026-10-22T22:00:00Z"), next("2026-10-21T22:00:00Z")); // midnight sharp
+        assertEquals(Instant.parse("2026-10-21T22:00:00Z"), next("2026-10-21T02:00:00Z")); // 4:00
+        // summer time ends in the night to the 25th, so that midnight is 23:00 UTC
+        assertEquals(Instant.parse("2026-10-24T22:00:00Z"), next("2026-10-24T20:00:00Z")); // 22:00 on the 24th
+        assertEquals(Instant.parse("2026-10-25T23:00:00Z"), next("2026-10-25T10:00:00Z")); // 11:00 on the 25th
+        // summer time begins in the night to 28 March, midnight before it is 23:00 UTC, after it 22:00 UTC
+        assertEquals(Instant.parse("2027-03-27T23:00:00Z"), next("2027-03-27T21:00:00Z")); // 22:00 on the 27th
+        assertEquals(Instant.parse("2027-03-28T22:00:00Z"), next("2027-03-28T10:00:00Z")); // noon on the 28th
     }
 }
