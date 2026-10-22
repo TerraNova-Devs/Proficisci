@@ -14,7 +14,7 @@ import java.util.logging.Level;
 
 /** Every vote gives the player free trips until midnight. */
 public class VoteListener implements Listener {
-    private static final int VOTE_FREE_TRIPS = 5;
+    public static final int VOTE_FREE_TRIPS = 5;
 
     private final Proficisci plugin;
 

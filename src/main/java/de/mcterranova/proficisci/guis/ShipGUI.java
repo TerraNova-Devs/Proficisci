@@ -2,6 +2,7 @@ package de.mcterranova.proficisci.guis;
 
 import de.mcterranova.proficisci.Proficisci;
 import de.mcterranova.proficisci.database.BarrelDatabase;
+import de.mcterranova.proficisci.listener.VoteListener;
 import de.mcterranova.proficisci.services.ShipService;
 import de.mcterranova.terranovaLib.roseGUI.RoseGUI;
 import de.mcterranova.terranovaLib.roseGUI.RoseItem;
@@ -46,20 +47,23 @@ public class ShipGUI extends RoseGUI {
                 .build();
         fillGui(filler);
 
-        // the free trips as a note at the top in the middle, as many sheets as trips; none without
-        int freeTrips = 0;
+        // the free trips as a note at the top in the middle, as many sheets as trips; without any, one sheet that says
+        // to come back tomorrow (all used today) or to vote (none since midnight)
+        OptionalInt freeTrips = OptionalInt.empty();
         try {
             freeTrips = barrelDatabase.freeTrips(player.getUniqueId(), System.currentTimeMillis());
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        if (freeTrips > 0) {
-            addItem(4, new RoseItem.Builder()
-                    .copyStack(new ItemStack(Material.PAPER, Math.min(freeTrips, 64)))
-                    .displayName(Chat.stringToComponent("<!i><white><b>Freifahrten"))
-                    .addLore("<gray>Übrig: <white>" + freeTrips, "<gray>Gültig bis Mitternacht")
-                    .build());
-        }
+        int left = freeTrips.orElse(0);
+        String hint = left > 0 ? "<gray>Gültig bis Mitternacht"
+                : freeTrips.isPresent() ? "<gray>Komm morgen wieder"
+                : "<gray>Vote mit <white>/vote<gray> für " + VoteListener.VOTE_FREE_TRIPS + " Freifahrten";
+        addItem(4, new RoseItem.Builder()
+                .copyStack(new ItemStack(Material.PAPER, Math.max(1, Math.min(left, 64))))
+                .displayName(Chat.stringToComponent("<!i><white><b>Freifahrten"))
+                .addLore("<gray>Übrig: <white>" + left, hint)
+                .build());
 
         RoseItem next = new RoseItem.Builder()
                 .material(Material.SPECTRAL_ARROW)

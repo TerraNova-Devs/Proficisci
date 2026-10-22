@@ -153,6 +153,6 @@ public class ShipService {
     public int giveFreeTrips(UUID player, int trips) throws SQLException {
         Instant now = Instant.now();
         barrelDatabase.giveFreeTrips(player, trips, now.toEpochMilli(), nextFreeTripExpiry(now).toEpochMilli());
-        return barrelDatabase.freeTrips(player, now.toEpochMilli());
+        return barrelDatabase.freeTrips(player, now.toEpochMilli()).orElse(0);
     }
 }

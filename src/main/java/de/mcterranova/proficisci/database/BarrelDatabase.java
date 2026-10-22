@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
 
@@ -191,15 +192,15 @@ public class BarrelDatabase {
         }
     }
 
-    /** The free trips the player has left at {@code now}. */
-    public int freeTrips(UUID player, long now) throws SQLException {
+    /** The free trips the player has left at {@code now}; empty if none were given since the last midnight. */
+    public OptionalInt freeTrips(UUID player, long now) throws SQLException {
         String sql = "SELECT trips FROM free_trips WHERE player = ? AND expires > ?";
         try (Connection conn = hikariCPDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, player.toString());
             stmt.setLong(2, now);
             ResultSet rs = stmt.executeQuery();
-            return rs.next() ? rs.getInt("trips") : 0;
+            return rs.next() ? OptionalInt.of(rs.getInt("trips")) : OptionalInt.empty();
         }
     }
 
