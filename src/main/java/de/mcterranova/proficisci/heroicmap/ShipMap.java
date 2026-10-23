@@ -8,22 +8,26 @@ import com.nekyia.heroicmap.api.MapObject;
 import com.nekyia.heroicmap.api.PlayerLayer;
 import de.mcterranova.proficisci.Proficisci;
 import de.mcterranova.proficisci.database.BarrelDatabase;
+import de.mcterranova.proficisci.services.ShipService;
 import de.terranova.nations.regions.RegionManager;
 import de.terranova.nations.regions.grid.SettleRegion;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.WorldBorder;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -135,24 +139,26 @@ public final class ShipMap implements Listener {
     private void sync(UUID player) {
         Map<String, Location> ships = plugin.specialBarrelLocations;
         Map<String, MapObject> next = new HashMap<>();
-        // no way between harbours without a location or in different worlds; the search leaves such routes out
-        ToDoubleBiFunction<String, String> blocks = (a, b) -> {
-            Location from = ships.get(a);
-            Location to = ships.get(b);
-            return from == null || to == null || from.getWorld() == null || !from.getWorld().equals(to.getWorld())
-                    ? Double.POSITIVE_INFINITY
-                    : from.distance(to);
-        };
+        // no way between harbours without a location or in different worlds (infinite); the search leaves such routes out
+        ToDoubleBiFunction<String, String> blocks = (a, b) -> ShipService.seaDistance(ships.get(a), ships.get(b));
         for (List<String> pair : segments(plugin.shipService.getAllRoutes(), blocks, towns, on.getOrDefault(player, Set.of()))) {
             Location from = ships.get(pair.get(0));
             Location to = ships.get(pair.get(1));
             if (from == null || to == null || from.getWorld() == null || !from.getWorld().equals(to.getWorld())) {
                 continue;
             }
-            String id = UUID.nameUUIDFromBytes(String.join("\n", pair).getBytes(StandardCharsets.UTF_8)).toString();
-            next.put(id, MapObject.Line.through(id, List.of(point(from), point(to)))
-                    .withDimension(from.getWorld().getKey().asString())
-                    .withStroke(ROUTE));
+            // a leg round the world is drawn up to the border and on from the other side
+            WorldBorder border = from.getWorld().getWorldBorder();
+            List<double[]> pieces = pieces(from.getBlockX() + 0.5, from.getBlockZ() + 0.5,
+                    to.getBlockX() + 0.5, to.getBlockZ() + 0.5,
+                    border.getCenter().getX(), border.getCenter().getZ(), border.getSize());
+            for (int i = 0; i < pieces.size(); i++) {
+                double[] p = pieces.get(i);
+                String id = UUID.nameUUIDFromBytes((String.join("\n", pair) + "\n" + i).getBytes(StandardCharsets.UTF_8)).toString();
+                next.put(id, MapObject.Line.through(id, List.of(new MapObject.Point(p[0], p[1]), new MapObject.Point(p[2], p[3])))
+                        .withDimension(from.getWorld().getKey().asString())
+                        .withStroke(ROUTE));
+            }
         }
         PlayerLayer own = layer.forPlayer(player);
         Map<String, MapObject> old = shown.getOrDefault(player, Map.of());
@@ -223,7 +229,36 @@ public final class ShipMap implements Listener {
         return before;
     }
 
-    private static MapObject.Point point(Location l) {
-        return new MapObject.Point(l.getBlockX() + 0.5, l.getBlockZ() + 0.5);
+    /**
+     * The straight line from (x0, z0) to (x1, z1) the short way round a world {@code size} wide around (cx, cz), as
+     * ShipService.seaDistance measures it, cut at the border and each piece moved back into the world: one piece
+     * without wrapping, two over one border, three over a corner. Each piece is {x, z, x, z}.
+     */
+    static List<double[]> pieces(double x0, double z0, double x1, double z1, double cx, double cz, double size) {
+        double dx = ShipService.wrap(x1 - x0, size);
+        double dz = ShipService.wrap(z1 - z0, size);
+        double minX = cx - size / 2;
+        double minZ = cz - size / 2;
+        // where the way crosses a border line; it crosses each axis at most once, being at most half the world long
+        TreeSet<Double> cuts = new TreeSet<>(List.of(0.0, 1.0));
+        for (double edge : new double[] {minX, minX + size}) {
+            if (dx != 0 && (edge - x0) / dx > 0 && (edge - x0) / dx < 1) cuts.add((edge - x0) / dx);
+        }
+        for (double edge : new double[] {minZ, minZ + size}) {
+            if (dz != 0 && (edge - z0) / dz > 0 && (edge - z0) / dz < 1) cuts.add((edge - z0) / dz);
+        }
+        List<double[]> pieces = new ArrayList<>();
+        Double from = null;
+        for (double to : cuts) {
+            if (from != null) {
+                // the world copy the middle of the piece lies in, moved back by whole worlds
+                double shiftX = Math.floor((x0 + dx * (from + to) / 2 - minX) / size) * size;
+                double shiftZ = Math.floor((z0 + dz * (from + to) / 2 - minZ) / size) * size;
+                pieces.add(new double[] {x0 + dx * from - shiftX, z0 + dz * from - shiftZ,
+                        x0 + dx * to - shiftX, z0 + dz * to - shiftZ});
+            }
+            from = to;
+        }
+        return pieces;
     }
 }
