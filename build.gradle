@@ -53,9 +53,9 @@ dependencies {
     compileOnly 'de.mcterranova:terranova-lib:1.0.1'
     compileOnly 'de.terranova:nations:1.0.0-SNAPSHOT'
     // HeroicMap-API über JitPack, nur zum Übersetzen; das Jar von HeroicMap bringt die Klassen mit.
-    // Ab v0.11.0 mit Knöpfen und Objekten je Spieler.
-    compileOnly 'com.github.VonNekyia:heroic-map-renderer-plugin:v0.11.0'
-    testImplementation 'com.github.VonNekyia:heroic-map-renderer-plugin:v0.11.0'
+    // Ab v0.11.0 mit Knöpfen und Objekten je Spieler, v0.17.0 ist der Stand der Server ab dem nächsten Paket.
+    compileOnly 'com.github.VonNekyia:heroic-map-renderer-plugin:v0.17.0'
+    testImplementation 'com.github.VonNekyia:heroic-map-renderer-plugin:v0.17.0'
     testImplementation platform('org.junit:junit-bom:6.1.3')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

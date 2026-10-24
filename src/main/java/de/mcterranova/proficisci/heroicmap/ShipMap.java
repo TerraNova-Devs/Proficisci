@@ -18,6 +18,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -43,6 +46,12 @@ public final class ShipMap implements Listener {
     /** The layer of the towns of Nations; its objects are named by the UUID of the town. */
     private static final String TOWNS = "nations:staedte";
     private static final MapObject.Stroke ROUTE = MapObject.Stroke.of("#DBB050").withDash(10, 10);
+    // the ship of the Aseprite designer (design/HeroicMap/schiff.aseprite), images of the layer
+    private static final MapObject.Symbol SHIP = new MapObject.Symbol("images/schiff_16.png", "images/schiff_9.png");
+    private static final String PIN_COLOR = "#DBB050";
+    // objects per layer for everyone, and per player and layer; HeroicMap throws above, which would stop the sync
+    static final int LIMIT = 1000;
+    private boolean warnedLimit;
 
     private final Proficisci plugin;
     private final Layer layer;
@@ -53,6 +62,8 @@ public final class ShipMap implements Listener {
     private Map<String, UUID> towns = Map.of();
     // player -> the lines they have on the layer
     private final Map<UUID, Map<String, MapObject>> shown = new HashMap<>();
+    // harbour -> its pin on the layer for everyone, from the last sync
+    private Map<String, MapObject> pins = Map.of();
     // writes of the button states, off the main thread and in click order; a daemon, so it never holds up the stop
     private final ExecutorService writes = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "Proficisci-Schiffsknopf");
@@ -76,6 +87,13 @@ public final class ShipMap implements Listener {
         Layer layer = api.layer(plugin, "schiffsrouten");
         layer.name("Schiffsrouten", "Ship routes");
         layer.order(103);
+        for (String image : List.of("schiff_16.png", "schiff_9.png")) {
+            try (InputStream in = plugin.getResource("heroicmap/" + image)) {
+                layer.image("images/" + image, in.readAllBytes());
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
         MapButton button = api.button(plugin, "schiff", "Schiff", "Ship");
         ShipMap map = new ShipMap(plugin, layer, button, BarrelDatabase.getInstance().loadRouteButtons());
         Bukkit.getPluginManager().registerEvents(map, plugin);
@@ -127,6 +145,22 @@ public final class ShipMap implements Listener {
                 if (!after.contains(town)) button.detach(TOWNS, town.toString());
             }
             towns = now;
+            // a ship on every ship block, for everyone; the name only outside a town, whose banner names it otherwise
+            Map<String, MapObject> next = new HashMap<>();
+            plugin.specialBarrelLocations.forEach((harbour, loc) -> {
+                if (loc.getWorld() != null) {
+                    MapObject.Pin pin = pin("hafen-", harbour, loc, MapObject.Size.MEDIUM);
+                    next.put(harbour, now.containsKey(harbour) ? pin : pin.withName(name(harbour)));
+                }
+            });
+            Map<String, MapObject> kept = capped(next, "alle");
+            kept.forEach((harbour, pin) -> {
+                if (!pin.equals(pins.get(harbour))) layer.put(pin);
+            });
+            pins.forEach((harbour, pin) -> {
+                if (!kept.containsKey(harbour)) layer.remove(pin.id());
+            });
+            pins = kept;
             on.keySet().forEach(this::sync);
         } catch (IllegalStateException e) {
             // only after layer or button are gone, as while HeroicMap is being disabled
@@ -135,7 +169,11 @@ public final class ShipMap implements Listener {
         }
     }
 
-    /** Puts the lines of this player that changed and removes those no route has any more. */
+    /**
+     * Puts the lines of this player that changed and removes those no route has any more. The stops show by the ships
+     * of the layer for everyone; a larger ship only on one player's ways is not possible, as objects of one player may
+     * name no image.
+     */
     private void sync(UUID player) {
         Map<String, Location> ships = plugin.specialBarrelLocations;
         Map<String, MapObject> next = new HashMap<>();
@@ -160,13 +198,14 @@ public final class ShipMap implements Listener {
                         .withStroke(ROUTE));
             }
         }
+        Map<String, MapObject> kept = capped(next, "Spieler " + player);
         PlayerLayer own = layer.forPlayer(player);
         Map<String, MapObject> old = shown.getOrDefault(player, Map.of());
-        next.forEach((id, line) -> {
-            if (!line.equals(old.get(id))) own.put(line);
+        kept.forEach((id, object) -> {
+            if (!object.equals(old.get(id))) own.put(object);
         });
-        old.keySet().stream().filter(id -> !next.containsKey(id)).forEach(own::remove);
-        shown.put(player, next);
+        old.keySet().stream().filter(id -> !kept.containsKey(id)).forEach(own::remove);
+        shown.put(player, kept);
     }
 
     /**
@@ -227,6 +266,41 @@ public final class ShipMap implements Listener {
             layer = List.copyOf(next.keySet());
         }
         return before;
+    }
+
+    /** At most {@link #LIMIT} of {@code objects}, the first by key; one log line per server start when any are left out. */
+    private Map<String, MapObject> capped(Map<String, MapObject> objects, String whose) {
+        if (objects.size() <= LIMIT) return objects;
+        if (!warnedLimit) {
+            warnedLimit = true;
+            plugin.getLogger().warning("HeroicMap: " + objects.size() + " Objekte der Schiffsrouten für " + whose
+                    + ", nur " + LIMIT + " gezeigt (Grenze der Ebene)");
+        }
+        Map<String, MapObject> kept = new TreeMap<>();
+        new TreeMap<>(objects).entrySet().stream().limit(LIMIT).forEach(e -> kept.put(e.getKey(), e.getValue()));
+        return kept;
+    }
+
+    /** The ship on the ship block of {@code harbour}; the id from the harbour, as the ids of the lines. */
+    private static MapObject.Pin pin(String prefix, String harbour, Location loc, MapObject.Size size) {
+        String id = prefix + UUID.nameUUIDFromBytes(harbour.getBytes(StandardCharsets.UTF_8));
+        return MapObject.Pin.at(id, loc.getBlockX() + 0.5, loc.getBlockZ() + 0.5)
+                .withDimension(loc.getWorld().getKey().asString())
+                .withY(loc.getBlockY())
+                .withSize(size)
+                .withSymbol(SHIP)
+                .withColor(PIN_COLOR);
+    }
+
+    /** "san_gatos" as "San Gatos". */
+    static String name(String harbour) {
+        StringBuilder name = new StringBuilder();
+        for (String word : harbour.split("_")) {
+            if (word.isEmpty()) continue;
+            if (!name.isEmpty()) name.append(' ');
+            name.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        return name.toString();
     }
 
     /**

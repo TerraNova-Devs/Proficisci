@@ -131,6 +131,12 @@ class ShipMapTest {
         assertEquals(Set.of(), ShipMap.segments(routes("a1-x", "x-a2"), FLAT, towns, Set.of(A)));
     }
 
+    @Test
+    void harbourNamesAsOnTheMap() {
+        assertEquals("Spawn", ShipMap.name("spawn"));
+        assertEquals("San Gatos", ShipMap.name("san_gatos"));
+    }
+
     /** The pieces of a leg in the overworld: 24000 wide around 0.5 0.5, so the border is at -11999.5 and 12000.5. */
     private static List<List<Double>> pieces(double x0, double z0, double x1, double z1) {
         return ShipMap.pieces(x0, z0, x1, z1, 0.5, 0.5, 24000).stream()
