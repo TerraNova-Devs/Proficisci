@@ -1,9 +1,9 @@
 package de.mcterranova.proficisci.guis;
 
-import com.nexomc.nexo.api.NexoItems;
 import de.mcterranova.proficisci.database.BarrelDatabase;
 
 
+import de.mcterranova.terranovaLib.InventoryUtil.ItemTransfer;
 import de.mcterranova.terranovaLib.roseGUI.RoseGUI;
 import de.mcterranova.terranovaLib.roseGUI.RoseItem;
 import de.mcterranova.terranovaLib.utils.Chat;
@@ -14,7 +14,6 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.entity.*;
 import org.bukkit.event.inventory.InventoryOpenEvent;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
@@ -43,7 +42,8 @@ public class ConfirmGUI extends RoseGUI {
                     Location targetLoc = locations.get(regionName.toLowerCase());
                     if (targetLoc != null) {
 
-                        if (!(chargeStrict(player, NexoItems.itemFromId("terranova_silver").build(), TELEPORT_COST, true) == -1)) {
+                        boolean free = useFreeTrip();
+                        if (free || ItemTransfer.charge(player, "terranova_silver", TELEPORT_COST, true) != -1) {
                             Location safeLocation = getSafeLocation(targetLoc);
                             playTeleportEffects(player.getLocation());
                             if (player.isInsideVehicle() && (player.getVehicle() instanceof Horse || player.getVehicle() instanceof Mule || player.getVehicle() instanceof Donkey)) {
@@ -57,6 +57,9 @@ public class ConfirmGUI extends RoseGUI {
                             }
                             playTeleportEffects(safeLocation);
                             player.sendMessage(Chat.greenFade("Du bist in " + regionName + " angekommen."));
+                            if (free) {
+                                player.sendMessage(Chat.greenFade("Die Reise war eine Freifahrt."));
+                            }
                         } else {
                             player.sendMessage(Component.text("Du brauchst mindestens " + TELEPORT_COST + " Silber für die Reise."));
                         }
@@ -75,36 +78,14 @@ public class ConfirmGUI extends RoseGUI {
         addItem(5, cancel);
     }
 
-    private Integer chargeStrict(Player p, ItemStack item, int amount, boolean onlyFullCharge) {
-        ItemStack[] stacks = p.getInventory().getContents();
-        int total = 0;
-        for (ItemStack stack : stacks) {
-            if (stack == null || !stack.isSimilar(item)) continue;
-            total += stack.getAmount();
+    /** Uses up a free trip if the player has one; on a database error the trip costs silver as before. */
+    private boolean useFreeTrip() {
+        try {
+            return barrelDatabase.useFreeTrip(player.getUniqueId(), System.currentTimeMillis());
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
-        if (onlyFullCharge && total < amount) return -1;
-
-        total = amount;
-
-
-        for (int i = 0; i < stacks.length; i++) {
-            if (stacks[i] == null || !stacks[i].isSimilar(item)) continue;
-
-
-            int stackAmount = stacks[i].getAmount();
-            int n = total;
-            if (stackAmount < total) {
-                stacks[i] = null;
-                total -= stackAmount;
-            } else {
-                stacks[i].setAmount(stackAmount - total);
-                total -= total;
-                break;
-            }
-        }
-        p.getInventory().setContents(stacks);
-        p.updateInventory();
-        return amount - total;
     }
 
     private void playTeleportEffects(Location location) {

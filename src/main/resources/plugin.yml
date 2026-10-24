@@ -1,7 +1,7 @@
 name: Proficisci
 version: 1.0.0
 main: de.mcterranova.proficisci.Proficisci
-api-version: 1.21.11
+api-version: '${minecraftVersion}'
 authors: [Bastizeit, gerryxn]
 prefix: TerraNova
 website: mcterranova.de
@@ -12,5 +12,14 @@ commands:
     usage: /ship <list|tp|name|view>
     permission: proficisci.admin
     permission-message: You do not have permission to use this command.
-depend: [Nexo, Nations, TerranovaLib]
-softdepend: [Pl3xMap]
+  watermap:
+    description: Render the water map around 0/0
+    usage: /watermap
+    permission: proficisci.admin
+    permission-message: You do not have permission to use this command.
+depend: [Nexo, Nations, TerranovaLib, WorldGuard]
+softdepend: [HeroicMap]
+permissions:
+  proficisci.admin:
+    description: Ship commands, and placing and breaking every ship block regardless of town and rank.
+    default: op

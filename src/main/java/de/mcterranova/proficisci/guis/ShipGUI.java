@@ -2,6 +2,7 @@ package de.mcterranova.proficisci.guis;
 
 import de.mcterranova.proficisci.Proficisci;
 import de.mcterranova.proficisci.database.BarrelDatabase;
+import de.mcterranova.proficisci.listener.VoteListener;
 import de.mcterranova.proficisci.services.ShipService;
 import de.mcterranova.terranovaLib.roseGUI.RoseGUI;
 import de.mcterranova.terranovaLib.roseGUI.RoseItem;
@@ -15,6 +16,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
@@ -45,6 +47,24 @@ public class ShipGUI extends RoseGUI {
                 .build();
         fillGui(filler);
 
+        // the free trips as a note at the top in the middle, as many sheets as trips; without any, one sheet that says
+        // to come back tomorrow (all used today) or to vote (none since midnight)
+        OptionalInt freeTrips = OptionalInt.empty();
+        try {
+            freeTrips = barrelDatabase.freeTrips(player.getUniqueId(), System.currentTimeMillis());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        int left = freeTrips.orElse(0);
+        String hint = left > 0 ? "<gray>Gültig bis Mitternacht"
+                : freeTrips.isPresent() ? "<gray>Komm morgen wieder"
+                : "<gray>Vote mit <white>/vote<gray> für " + VoteListener.VOTE_FREE_TRIPS + " Freifahrten";
+        addItem(4, new RoseItem.Builder()
+                .copyStack(new ItemStack(Material.PAPER, Math.max(1, Math.min(left, 64))))
+                .displayName(Chat.stringToComponent("<!i><white><b>Freifahrten"))
+                .addLore("<gray>Übrig: <white>" + left, hint)
+                .build());
+
         RoseItem next = new RoseItem.Builder()
                 .material(Material.SPECTRAL_ARROW)
                 .displayName(Chat.redFade("<b>Nächste Seite"))
@@ -68,7 +88,7 @@ public class ShipGUI extends RoseGUI {
                 return;
 
             Map<String, Location> locations = barrelDatabase.loadTeleportLocations().entrySet().stream()
-                    .sorted(Comparator.comparingDouble(entry -> entry.getValue().distance(currentLocation)))
+                    .sorted(Comparator.comparingDouble(entry -> ShipService.seaDistance(entry.getValue(), currentLocation)))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 
             Set<String> possibleShips = shipService.getConnectedShips(shipService.getCurrentShip(currentLocation));
@@ -99,7 +119,7 @@ public class ShipGUI extends RoseGUI {
                     .displayName(Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
                     .addLore("<red>Besitzer: <gray>Server",
                             "<red>Koordinaten: <gray>" + (int) loc.getX() + ", " + (int) loc.getY() + ", " + (int) loc.getZ(),
-                            "<red>Distanz: <gray>" + (int) loc.distance(currentLocation) + "m",
+                            "<red>Distanz: <gray>" + (int) ShipService.seaDistance(loc, currentLocation) + "m",
                             "<red>Reisekosten: <gray>1 Silver")
                     .build();
         } else {
@@ -109,7 +129,7 @@ public class ShipGUI extends RoseGUI {
                         .displayName(Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
                         .addLore("<red>Besitzer: <gray>" + Bukkit.getOfflinePlayer(settle.get().getAccess().getEveryUUIDWithCertainAccessLevel(AccessLevel.MAJOR).stream().findFirst().get()).getName(),
                                 "<red>Koordinaten: <gray>" + (int) loc.getX() + ", " + (int) loc.getY() + ", " + (int) loc.getZ(),
-                                "<red>Distanz: <gray>" + (int) loc.distance(currentLocation) + "m",
+                                "<red>Distanz: <gray>" + (int) ShipService.seaDistance(loc, currentLocation) + "m",
                                 "<red>Reisekosten: <gray>1 Silver")
                         .build();
             } catch (NoSuchElementException ex) {
@@ -118,7 +138,7 @@ public class ShipGUI extends RoseGUI {
                         .displayName(Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
                         .addLore("<red>Besitzer: <gray>" + "Unbekannt (Fehler mit Stadt)",
                                 "<red>Koordinaten: <gray>" + (int) loc.getX() + ", " + (int) loc.getY() + ", " + (int) loc.getZ(),
-                                "<red>Distanz: <gray>" + (int) loc.distance(currentLocation) + "m",
+                                "<red>Distanz: <gray>" + (int) ShipService.seaDistance(loc, currentLocation) + "m",
                                 "<red>Reisekosten: <gray>1 Silver")
                         .build();
             }

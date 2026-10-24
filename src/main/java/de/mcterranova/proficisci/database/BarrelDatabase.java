@@ -8,7 +8,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.OptionalInt;
+import java.util.Set;
 import java.util.UUID;
 
 public class BarrelDatabase {
@@ -134,20 +137,71 @@ public class BarrelDatabase {
         return null;
     }
 
-    public UUID getShipOwner(Location loc) throws SQLException {
-        String query = "SELECT owner FROM barrel_locations WHERE world = ? AND x = ? AND y = ? AND z = ?";
+    /** Player -> the towns where they switched the ship button on. */
+    public Map<UUID, Set<UUID>> loadRouteButtons() throws SQLException {
+        Map<UUID, Set<UUID>> on = new HashMap<>();
         try (Connection conn = hikariCPDatabase.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setString(1, loc.getWorld().getName());
-            stmt.setDouble(2, loc.getX());
-            stmt.setDouble(3, loc.getY());
-            stmt.setDouble(4, loc.getZ());
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return UUID.fromString(rs.getString("owner"));
+             PreparedStatement stmt = conn.prepareStatement("SELECT player, town FROM ship_route_buttons");
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                on.computeIfAbsent(UUID.fromString(rs.getString("player")), p -> new HashSet<>())
+                        .add(UUID.fromString(rs.getString("town")));
             }
         }
-        return null;
+        return on;
+    }
+
+    public void setRouteButton(UUID player, UUID town, boolean on) throws SQLException {
+        String sql = on
+                ? "INSERT IGNORE INTO ship_route_buttons (player, town) VALUES (?, ?)"
+                : "DELETE FROM ship_route_buttons WHERE player = ? AND town = ?";
+        try (Connection conn = hikariCPDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, player.toString());
+            stmt.setString(2, town.toString());
+            stmt.executeUpdate();
+        }
+    }
+
+    /**
+     * Adds free trips valid until {@code expires}; trips that ran out before {@code now} are not added to.
+     * The update reads expires before it sets it, so the old value decides.
+     */
+    public void giveFreeTrips(UUID player, int trips, long now, long expires) throws SQLException {
+        String sql = "INSERT INTO free_trips (player, trips, expires) VALUES (?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE trips = IF(expires > ?, trips + VALUES(trips), VALUES(trips)), " +
+                "expires = VALUES(expires)";
+        try (Connection conn = hikariCPDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, player.toString());
+            stmt.setInt(2, trips);
+            stmt.setLong(3, expires);
+            stmt.setLong(4, now);
+            stmt.executeUpdate();
+        }
+    }
+
+    /** Uses up one free trip if the player has one left at {@code now}; in one statement, so never twice. */
+    public boolean useFreeTrip(UUID player, long now) throws SQLException {
+        String sql = "UPDATE free_trips SET trips = trips - 1 WHERE player = ? AND trips > 0 AND expires > ?";
+        try (Connection conn = hikariCPDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, player.toString());
+            stmt.setLong(2, now);
+            return stmt.executeUpdate() == 1;
+        }
+    }
+
+    /** The free trips the player has left at {@code now}; empty if none were given since the last midnight. */
+    public OptionalInt freeTrips(UUID player, long now) throws SQLException {
+        String sql = "SELECT trips FROM free_trips WHERE player = ? AND expires > ?";
+        try (Connection conn = hikariCPDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, player.toString());
+            stmt.setLong(2, now);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next() ? OptionalInt.of(rs.getInt("trips")) : OptionalInt.empty();
+        }
     }
 
     public boolean regionHasBarrel(String regionName) throws SQLException {

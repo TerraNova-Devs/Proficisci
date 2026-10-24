@@ -1,17 +1,16 @@
 package de.mcterranova.proficisci;
 
 import de.mcterranova.proficisci.command.ShipCommand;
+import de.mcterranova.proficisci.command.WaterMapCommand;
 import de.mcterranova.proficisci.database.HikariCPDatabase;
 import de.mcterranova.proficisci.database.BarrelDatabase;
+import de.mcterranova.proficisci.heroicmap.ShipMap;
 import de.mcterranova.proficisci.listener.*;
-import de.mcterranova.proficisci.pl3xmap.Pl3xMapShipRouteLayer;
 import de.mcterranova.proficisci.services.ShipService;
 import de.mcterranova.proficisci.utils.SilverManager;
+import de.mcterranova.proficisci.watermap.WaterMapService;
 import de.mcterranova.terranovaLib.roseGUI.RoseGUIListener;
 import net.kyori.adventure.text.TextComponent;
-import net.pl3x.map.core.Pl3xMap;
-import net.pl3x.map.core.markers.layer.Layer;
-import net.pl3x.map.core.registry.Registry;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -23,6 +22,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import net.kyori.adventure.text.Component;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -31,8 +31,8 @@ public final class Proficisci extends JavaPlugin {
     private HikariCPDatabase hikariCPDatabase;
     private BarrelDatabase barrelDatabase;
     public Map<String, Location> specialBarrelLocations;
-    private Registry<Layer> layerRegistry;
     public ShipService shipService;
+    public WaterMapService waterMapService;
 
     public static Proficisci getInstance() {
         return instance;
@@ -41,19 +41,24 @@ public final class Proficisci extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+        saveDefaultConfig();
 
         try {
             SilverManager.init();
-            hikariCPDatabase = HikariCPDatabase.getInstance();
+            hikariCPDatabase = HikariCPDatabase.getInstance(this);
             barrelDatabase = BarrelDatabase.getInstance();
             shipService = new ShipService();
+            waterMapService = new WaterMapService(this);
+            waterMapService.initialize();
 
             getServer().getPluginManager().registerEvents(new BarrelListener(this), this);
             getServer().getPluginManager().registerEvents(new PlayerMoveListener(this), this);
             getServer().getPluginManager().registerEvents(new BarrelClickListener(this), this);
+            getServer().getPluginManager().registerEvents(new VoteListener(this), this);
             Objects.requireNonNull(getCommand("ship")).setExecutor(new ShipCommand());
+            Objects.requireNonNull(getCommand("watermap")).setExecutor(new WaterMapCommand());
             specialBarrelLocations = barrelDatabase.loadTeleportLocations();
-        } catch (SQLException e) {
+        } catch (SQLException | IOException e) {
             e.printStackTrace();
             getServer().getPluginManager().disablePlugin(this);
             return;
@@ -61,27 +66,26 @@ public final class Proficisci extends JavaPlugin {
 
         Bukkit.addRecipe(getSpecialBarrelRecipe());
 
-        // OPTIONALER PL3XMAP SUPPORT
-        if(Bukkit.getPluginManager().getPlugin("Pl3xMap") != null) {
+        // ShipMap names the API of HeroicMap; without HeroicMap only ship button and routes are missing on the map.
+        if (getServer().getPluginManager().isPluginEnabled("HeroicMap")) {
             try {
-                pl3xmapMarkerRegistry();
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
+                ShipMap.start(this);
+            } catch (LinkageError | RuntimeException | SQLException e) {
+                getLogger().warning("HeroicMap: Schiffsrouten nicht auf der Karte: " + e);
             }
         }
     }
 
     @Override
     public void onDisable() {
+        if (waterMapService != null) {
+            waterMapService.shutdown();
+        }
         if (hikariCPDatabase != null) {
             hikariCPDatabase.closeConnection();
         }
     }
 
-    private void pl3xmapMarkerRegistry() throws SQLException {
-        this.layerRegistry = Objects.requireNonNull(Pl3xMap.api().getWorldRegistry().get("world")).getLayerRegistry();
-        layerRegistry.register("ship-route-layer",new Pl3xMapShipRouteLayer(Objects.requireNonNull(Pl3xMap.api().getWorldRegistry().get("world"))));
-    }
 
     public ItemStack getSpecialBarrelItem() {
         ItemStack specialBarrel = new ItemStack(Material.BARREL);

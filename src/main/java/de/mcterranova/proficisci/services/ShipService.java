@@ -5,6 +5,8 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -78,7 +80,7 @@ public class ShipService {
                 if (shipA.equals(shipB)) continue;
                 Location locB = entryB.getValue();
 
-                double distance = locA.distance(locB);
+                double distance = seaDistance(locA, locB);
                 if (distance <= MAX_DISTANCE) {
                     shipRoutes.get(shipA).add(shipB);
                 }
@@ -93,7 +95,7 @@ public class ShipService {
                 Location loc = entry.getValue();
                 for (Map.Entry<String, Location> otherEntry : ships.entrySet()) {
                     if (otherEntry.getKey().equals(shipName)) continue;
-                    double d = loc.distance(otherEntry.getValue());
+                    double d = seaDistance(loc, otherEntry.getValue());
                     if (d < nearestDistance) {
                         nearestDistance = d;
                         nearestShip = otherEntry.getKey();
@@ -106,6 +108,31 @@ public class ShipService {
                 }
             }
         }
+    }
+
+    /**
+     * Blocks between two harbours by sea. Ships sail round the world: who leaves at the border on one side comes in
+     * at the other (in the overworld at +12000 and -12000), on both axes, so towns at the edge have neighbours across
+     * it too. The border comes from the world; in the nether and the end it is so far out that nothing wraps.
+     * Infinite between worlds or without a location.
+     */
+    public static double seaDistance(Location a, Location b) {
+        if (a == null || b == null || a.getWorld() == null || !a.getWorld().equals(b.getWorld())) {
+            return Double.POSITIVE_INFINITY;
+        }
+        double size = a.getWorld().getWorldBorder().getSize();
+        double dx = wrap(b.getX() - a.getX(), size);
+        double dz = wrap(b.getZ() - a.getZ(), size);
+        double dy = b.getY() - a.getY();
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+
+    /** The shorter way along one axis of a world {@code size} wide: {@code d}, or round the world the other way. */
+    public static double wrap(double d, double size) {
+        d %= size;
+        if (d > size / 2) return d - size;
+        if (d < -size / 2) return d + size;
+        return d;
     }
 
     public Set<String> getConnectedShips(String shipName) {
@@ -137,5 +164,20 @@ public class ShipService {
 
     public UUID getShipOwner(String regionName) throws SQLException {
         return barrelDatabase.getShipOwner(regionName);
+    }
+
+    /** Free trips run out at midnight German time, with the reset of the votes, whatever the zone of the server. */
+    private static final ZoneId FREE_TRIP_ZONE = ZoneId.of("Europe/Berlin");
+
+    /** The next midnight in Germany after {@code now}. */
+    public static Instant nextFreeTripExpiry(Instant now) {
+        return now.atZone(FREE_TRIP_ZONE).toLocalDate().plusDays(1).atStartOfDay(FREE_TRIP_ZONE).toInstant();
+    }
+
+    /** Gives free trips until the next midnight and returns how many the player has now. */
+    public int giveFreeTrips(UUID player, int trips) throws SQLException {
+        Instant now = Instant.now();
+        barrelDatabase.giveFreeTrips(player, trips, now.toEpochMilli(), nextFreeTripExpiry(now).toEpochMilli());
+        return barrelDatabase.freeTrips(player, now.toEpochMilli()).orElse(0);
     }
 }
