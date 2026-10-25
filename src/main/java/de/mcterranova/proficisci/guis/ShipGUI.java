@@ -8,7 +8,11 @@ import de.mcterranova.terranovaLib.roseGUI.RoseGUI;
 import de.mcterranova.terranovaLib.roseGUI.RoseItem;
 import de.mcterranova.terranovaLib.roseGUI.RosePagination;
 import de.mcterranova.terranovaLib.utils.Chat;
+import de.terranova.nations.NationsPlugin;
+import de.terranova.nations.nations.Nation;
 import de.terranova.nations.regions.RegionManager;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import de.terranova.nations.regions.grid.SettleRegion;
 import de.terranova.nations.regions.modules.access.AccessLevel;
 import org.bukkit.Bukkit;
@@ -124,9 +128,10 @@ public class ShipGUI extends RoseGUI {
                             "<red>Reisekosten: <gray>1 Silver")
                     .build();
         } else {
+            ItemStack banner = townBanner(settle);
             try {
                 locationItem = new RoseItem.Builder()
-                        .material(Material.ENDER_PEARL)
+                        .copyStack(banner)
                         .displayName(Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
                         .addLore("<red>Besitzer: <gray>" + Bukkit.getOfflinePlayer(settle.get().getAccess().getEveryUUIDWithCertainAccessLevel(AccessLevel.MAJOR).stream().findFirst().get()).getName(),
                                 "<red>Koordinaten: <gray>" + (int) loc.getX() + ", " + (int) loc.getY() + ", " + (int) loc.getZ(),
@@ -135,7 +140,7 @@ public class ShipGUI extends RoseGUI {
                         .build();
             } catch (NoSuchElementException ex) {
                 locationItem = new RoseItem.Builder()
-                        .material(Material.ENDER_PEARL)
+                        .copyStack(banner)
                         .displayName(Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
                         .addLore("<red>Besitzer: <gray>" + "Unbekannt (Fehler mit Stadt)",
                                 "<red>Koordinaten: <gray>" + (int) loc.getX() + ", " + (int) loc.getY() + ", " + (int) loc.getZ(),
@@ -154,6 +159,21 @@ public class ShipGUI extends RoseGUI {
             }
         });
         pagination.addItem(locationItem);
+    }
+
+    /**
+     * The banner of the nation of the town, as on the map: white for a town without a nation or without a banner of
+     * its nation, and for a harbour outside any town. The list of its patterns stays out of the tooltip.
+     */
+    private static ItemStack townBanner(Optional<SettleRegion> settle) {
+        ItemStack banner = settle.map(s -> NationsPlugin.nationManager.getNationBySettlement(s.getId()))
+                .map(Nation::getBanner)
+                .map(ItemStack::clone)
+                .orElseGet(() -> new ItemStack(Material.WHITE_BANNER));
+        banner.setAmount(1);
+        banner.setData(DataComponentTypes.TOOLTIP_DISPLAY,
+                TooltipDisplay.tooltipDisplay().addHiddenComponents(DataComponentTypes.BANNER_PATTERNS));
+        return banner;
     }
 
     private String capitalize(String str) {
