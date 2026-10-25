@@ -74,7 +74,8 @@ public class ShipGUI extends RoseGUI {
         RoseItem close = new RoseItem.Builder()
                 .material(Material.BARRIER)
                 .displayName(Chat.redFade("<b>Menü verlassen"))
-                .build().onClick(e -> pagination.goLastPage());
+                // closing within the click is not safe, so a tick later
+                .build().onClick(e -> Bukkit.getScheduler().runTask(Proficisci.getInstance(), () -> player.closeInventory()));
         addItem(close, 40);
 
         RoseItem last = new RoseItem.Builder()
@@ -147,7 +148,7 @@ public class ShipGUI extends RoseGUI {
 
         locationItem.onClick(e -> {
             try {
-                new ConfirmGUI(player, regionName, loc).open();
+                new ConfirmGUI(player, regionName, loc, currentLocation).open();
             } catch (SQLException ex) {
                 throw new RuntimeException(ex);
             }
