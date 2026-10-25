@@ -8,6 +8,8 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
 public class ShipService {
@@ -133,6 +135,30 @@ public class ShipService {
         if (d > size / 2) return d - size;
         if (d < -size / 2) return d + size;
         return d;
+    }
+
+    /**
+     * {@code items} with the same {@code group} side by side: the groups by their nearest item, within a group by
+     * {@code distance}. Two groups exactly as near are never mixed, and on a tie the item first by its own order.
+     */
+    public static <T extends Comparable<T>> List<T> byGroupThenDistance(Collection<T> items, Function<T, ?> group,
+                                                                       ToDoubleFunction<T> distance) {
+        Map<T, Object> groups = new HashMap<>();
+        Map<T, Double> distances = new HashMap<>();
+        Map<Object, Double> nearest = new HashMap<>();
+        for (T item : items) {
+            Object g = group.apply(item);
+            double d = distance.applyAsDouble(item);
+            groups.put(item, g);
+            distances.put(item, d);
+            nearest.merge(g, d, Math::min);
+        }
+        return items.stream()
+                .sorted(Comparator.<T>comparingDouble(i -> nearest.get(groups.get(i)))
+                        .thenComparing(i -> String.valueOf(groups.get(i)))
+                        .thenComparingDouble(distances::get)
+                        .thenComparing(Comparator.naturalOrder()))
+                .toList();
     }
 
     public Set<String> getConnectedShips(String shipName) {

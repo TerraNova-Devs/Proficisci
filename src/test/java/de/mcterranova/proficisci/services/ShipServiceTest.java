@@ -3,9 +3,29 @@ package de.mcterranova.proficisci.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class ShipServiceTest {
+
+    @Test
+    void sameBannersSideBySideNearestGroupFirst() {
+        // harbour -> banner and distance
+        Map<String, String> banner = Map.of("a", "white", "b", "n1", "c", "white", "d", "n1", "e", "n2", "f", "spawn");
+        Map<String, Double> blocks = Map.of("a", 100.0, "b", 50.0, "c", 300.0, "d", 400.0, "e", 200.0, "f", 250.0);
+        // n1 from 50 on, white from 100, n2 from 200, spawn from 250; within each group by distance
+        assertEquals(List.of("b", "d", "a", "c", "e", "f"),
+                ShipService.byGroupThenDistance(banner.keySet(), banner::get, blocks::get));
+    }
+
+    @Test
+    void groupsAsNearAreNotMixed() {
+        Map<String, String> banner = Map.of("a", "n1", "b", "n2", "c", "n1", "d", "n2");
+        Map<String, Double> blocks = Map.of("a", 100.0, "b", 100.0, "c", 300.0, "d", 200.0);
+        assertEquals(List.of("a", "c", "b", "d"),
+                ShipService.byGroupThenDistance(banner.keySet(), banner::get, blocks::get));
+    }
 
     private static Instant next(String now) {
         return ShipService.nextFreeTripExpiry(Instant.parse(now));

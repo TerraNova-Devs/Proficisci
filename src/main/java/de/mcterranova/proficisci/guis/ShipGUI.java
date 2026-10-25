@@ -8,7 +8,11 @@ import de.mcterranova.terranovaLib.roseGUI.RoseGUI;
 import de.mcterranova.terranovaLib.roseGUI.RoseItem;
 import de.mcterranova.terranovaLib.roseGUI.RosePagination;
 import de.mcterranova.terranovaLib.utils.Chat;
+import de.terranova.nations.NationsPlugin;
+import de.terranova.nations.nations.Nation;
 import de.terranova.nations.regions.RegionManager;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import de.terranova.nations.regions.grid.SettleRegion;
 import de.terranova.nations.regions.modules.access.AccessLevel;
 import org.bukkit.Bukkit;
@@ -21,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ShipGUI extends RoseGUI {
 
@@ -88,18 +91,18 @@ public class ShipGUI extends RoseGUI {
             if(shipService.getCurrentShip(currentLocation) == null)
                 return;
 
-            Map<String, Location> locations = barrelDatabase.loadTeleportLocations().entrySet().stream()
-                    .sorted(Comparator.comparingDouble(entry -> ShipService.seaDistance(entry.getValue(), currentLocation)))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-
             Set<String> possibleShips = shipService.getConnectedShips(shipService.getCurrentShip(currentLocation));
+            Map<String, Location> destinations = new HashMap<>();
+            barrelDatabase.loadTeleportLocations().forEach((name, loc) -> {
+                if (possibleShips.contains(name)) destinations.put(name, loc);
+            });
 
-            for (Map.Entry<String, Location> entry : locations.entrySet()) {
-                String regionName = capitalize(entry.getKey());
-
-                if (possibleShips.contains(entry.getKey()))  {
-                    addTeleportOption(player, entry.getValue(), regionName, currentLocation);
-                }
+            // same banners side by side, the group with the nearest harbour first, within a group by distance
+            List<String> ordered = ShipService.byGroupThenDistance(destinations.keySet(),
+                    name -> bannerGroup(name, destinations.get(name)),
+                    name -> ShipService.seaDistance(destinations.get(name), currentLocation));
+            for (String name : ordered) {
+                addTeleportOption(player, destinations.get(name), capitalize(name), currentLocation);
             }
             pagination.update();
         } catch (SQLException e) {
@@ -124,9 +127,10 @@ public class ShipGUI extends RoseGUI {
                             "<red>Reisekosten: <gray>1 Silver")
                     .build();
         } else {
+            ItemStack banner = townBanner(settle);
             try {
                 locationItem = new RoseItem.Builder()
-                        .material(Material.ENDER_PEARL)
+                        .copyStack(banner)
                         .displayName(Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
                         .addLore("<red>Besitzer: <gray>" + Bukkit.getOfflinePlayer(settle.get().getAccess().getEveryUUIDWithCertainAccessLevel(AccessLevel.MAJOR).stream().findFirst().get()).getName(),
                                 "<red>Koordinaten: <gray>" + (int) loc.getX() + ", " + (int) loc.getY() + ", " + (int) loc.getZ(),
@@ -135,7 +139,7 @@ public class ShipGUI extends RoseGUI {
                         .build();
             } catch (NoSuchElementException ex) {
                 locationItem = new RoseItem.Builder()
-                        .material(Material.ENDER_PEARL)
+                        .copyStack(banner)
                         .displayName(Chat.blueFade("<b>" + regionName.replaceAll("_", " ")))
                         .addLore("<red>Besitzer: <gray>" + "Unbekannt (Fehler mit Stadt)",
                                 "<red>Koordinaten: <gray>" + (int) loc.getX() + ", " + (int) loc.getY() + ", " + (int) loc.getZ(),
@@ -154,6 +158,30 @@ public class ShipGUI extends RoseGUI {
             }
         });
         pagination.addItem(locationItem);
+    }
+
+    /** What shows the same banner: the nation with a banner, all white banners, the spawn with its ender pearl. */
+    private static Object bannerGroup(String harbour, Location loc) {
+        if (harbour.equalsIgnoreCase("spawn")) return "spawn";
+        Nation nation = RegionManager.retrieveRegion(SettleRegion.class, loc)
+                .map(s -> NationsPlugin.nationManager.getNationBySettlement(s.getId()))
+                .orElse(null);
+        return nation == null || nation.getBanner() == null ? "white" : nation.getId();
+    }
+
+    /**
+     * The banner of the nation of the town, as on the map: white for a town without a nation or without a banner of
+     * its nation, and for a harbour outside any town. The list of its patterns stays out of the tooltip.
+     */
+    private static ItemStack townBanner(Optional<SettleRegion> settle) {
+        ItemStack banner = settle.map(s -> NationsPlugin.nationManager.getNationBySettlement(s.getId()))
+                .map(Nation::getBanner)
+                .map(ItemStack::clone)
+                .orElseGet(() -> new ItemStack(Material.WHITE_BANNER));
+        banner.setAmount(1);
+        banner.setData(DataComponentTypes.TOOLTIP_DISPLAY,
+                TooltipDisplay.tooltipDisplay().addHiddenComponents(DataComponentTypes.BANNER_PATTERNS));
+        return banner;
     }
 
     private String capitalize(String str) {
