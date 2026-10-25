@@ -49,12 +49,19 @@ public final class ShipMap implements Listener {
     // the ship of the Aseprite designer (design/HeroicMap/schiff.aseprite), images of the layer
     private static final MapObject.Symbol SHIP = new MapObject.Symbol("images/schiff_16.png", "images/schiff_9.png");
     private static final String PIN_COLOR = "#DBB050";
+    // the ships only from zoom -6 on: there the web map of main (scale 4) shows 64 / 4 = 16 blocks per pixel
+    private static final double SHIPS_MAX_BLOCKS_PER_PIXEL = 16;
+    // below the towns of Nations (102): pins of all layers lie above all shapes, among each other by order
+    private static final int SHIPS_ORDER = 101;
     // objects per layer for everyone, and per player and layer; HeroicMap throws above, which would stop the sync
     static final int LIMIT = 1000;
     private boolean warnedLimit;
 
     private final Proficisci plugin;
+    // the ways of each player, on every zoom
     private final Layer layer;
+    // the ship on every ship block, for everyone, only near; its own layer, so the ways stay when far out
+    private final Layer ships;
     private final MapButton button;
     // player -> towns with the button on, as in the database; a player stays with an empty set to clear the lines
     private final Map<UUID, Set<UUID>> on;
@@ -62,7 +69,7 @@ public final class ShipMap implements Listener {
     private Map<String, UUID> towns = Map.of();
     // player -> the lines they have on the layer
     private final Map<UUID, Map<String, MapObject>> shown = new HashMap<>();
-    // harbour -> its pin on the layer for everyone, from the last sync
+    // harbour -> its pin on the ship layer, from the last sync
     private Map<String, MapObject> pins = Map.of();
     // writes of the button states, off the main thread and in click order; a daemon, so it never holds up the stop
     private final ExecutorService writes = Executors.newSingleThreadExecutor(r -> {
@@ -71,14 +78,15 @@ public final class ShipMap implements Listener {
         return t;
     });
 
-    private ShipMap(Proficisci plugin, Layer layer, MapButton button, Map<UUID, Set<UUID>> on) {
+    private ShipMap(Proficisci plugin, Layer layer, Layer ships, MapButton button, Map<UUID, Set<UUID>> on) {
         this.plugin = plugin;
         this.layer = layer;
+        this.ships = ships;
         this.button = button;
         this.on = on;
     }
 
-    /** Creates layer and button, and syncs them every 30 seconds from the ships in memory. */
+    /** Creates layers and button, and syncs them every 30 seconds from the ships in memory. */
     public static void start(Proficisci plugin) throws SQLException {
         HeroicMapApi api = Bukkit.getServicesManager().load(HeroicMapApi.class);
         if (api == null) {
@@ -87,15 +95,25 @@ public final class ShipMap implements Listener {
         Layer layer = api.layer(plugin, "schiffsrouten");
         layer.name("Schiffsrouten", "Ship routes");
         layer.order(103);
+        Layer ships = api.layer(plugin, "schiffe");
+        ships.name("Schiffe", "Ships");
+        ships.order(SHIPS_ORDER);
+        try {
+            ships.maxBlocksPerPixel(SHIPS_MAX_BLOCKS_PER_PIXEL);
+        } catch (NoSuchMethodError e) {
+            // HeroicMap before 0.20 knows no zoom limit; the ships then show on every zoom
+            plugin.getLogger().warning("HeroicMap: keine Zoomgrenze vor 0.20, Schiffe auf jedem Zoom");
+        }
+        // images belong to the owner and serve all its layers
         for (String image : List.of("schiff_16.png", "schiff_9.png")) {
             try (InputStream in = plugin.getResource("heroicmap/" + image)) {
-                layer.image("images/" + image, in.readAllBytes());
+                ships.image("images/" + image, in.readAllBytes());
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
         }
         MapButton button = api.button(plugin, "schiff", "Schiff", "Ship");
-        ShipMap map = new ShipMap(plugin, layer, button, BarrelDatabase.getInstance().loadRouteButtons());
+        ShipMap map = new ShipMap(plugin, layer, ships, button, BarrelDatabase.getInstance().loadRouteButtons());
         Bukkit.getPluginManager().registerEvents(map, plugin);
         Bukkit.getScheduler().runTaskTimer(plugin, map::update, 20L, 20L * 30);
     }
@@ -155,10 +173,10 @@ public final class ShipMap implements Listener {
             });
             Map<String, MapObject> kept = capped(next, "alle");
             kept.forEach((harbour, pin) -> {
-                if (!pin.equals(pins.get(harbour))) layer.put(pin);
+                if (!pin.equals(pins.get(harbour))) ships.put(pin);
             });
             pins.forEach((harbour, pin) -> {
-                if (!kept.containsKey(harbour)) layer.remove(pin.id());
+                if (!kept.containsKey(harbour)) ships.remove(pin.id());
             });
             pins = kept;
             on.keySet().forEach(this::sync);
@@ -171,7 +189,7 @@ public final class ShipMap implements Listener {
 
     /**
      * Puts the lines of this player that changed and removes those no route has any more. The stops show by the ships
-     * of the layer for everyone; a larger ship only on one player's ways is not possible, as objects of one player may
+     * of the ship layer, near; a larger ship only on one player's ways is not possible, as objects of one player may
      * name no image.
      */
     private void sync(UUID player) {
