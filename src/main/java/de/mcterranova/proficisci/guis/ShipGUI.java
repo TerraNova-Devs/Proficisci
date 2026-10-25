@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ShipGUI extends RoseGUI {
 
@@ -92,18 +91,18 @@ public class ShipGUI extends RoseGUI {
             if(shipService.getCurrentShip(currentLocation) == null)
                 return;
 
-            Map<String, Location> locations = barrelDatabase.loadTeleportLocations().entrySet().stream()
-                    .sorted(Comparator.comparingDouble(entry -> ShipService.seaDistance(entry.getValue(), currentLocation)))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-
             Set<String> possibleShips = shipService.getConnectedShips(shipService.getCurrentShip(currentLocation));
+            Map<String, Location> destinations = new HashMap<>();
+            barrelDatabase.loadTeleportLocations().forEach((name, loc) -> {
+                if (possibleShips.contains(name)) destinations.put(name, loc);
+            });
 
-            for (Map.Entry<String, Location> entry : locations.entrySet()) {
-                String regionName = capitalize(entry.getKey());
-
-                if (possibleShips.contains(entry.getKey()))  {
-                    addTeleportOption(player, entry.getValue(), regionName, currentLocation);
-                }
+            // same banners side by side, the group with the nearest harbour first, within a group by distance
+            List<String> ordered = ShipService.byGroupThenDistance(destinations.keySet(),
+                    name -> bannerGroup(name, destinations.get(name)),
+                    name -> ShipService.seaDistance(destinations.get(name), currentLocation));
+            for (String name : ordered) {
+                addTeleportOption(player, destinations.get(name), capitalize(name), currentLocation);
             }
             pagination.update();
         } catch (SQLException e) {
@@ -159,6 +158,15 @@ public class ShipGUI extends RoseGUI {
             }
         });
         pagination.addItem(locationItem);
+    }
+
+    /** What shows the same banner: the nation with a banner, all white banners, the spawn with its ender pearl. */
+    private static Object bannerGroup(String harbour, Location loc) {
+        if (harbour.equalsIgnoreCase("spawn")) return "spawn";
+        Nation nation = RegionManager.retrieveRegion(SettleRegion.class, loc)
+                .map(s -> NationsPlugin.nationManager.getNationBySettlement(s.getId()))
+                .orElse(null);
+        return nation == null || nation.getBanner() == null ? "white" : nation.getId();
     }
 
     /**
